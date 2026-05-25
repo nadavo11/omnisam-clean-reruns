@@ -41,6 +41,7 @@ from PIL import Image
 
 from .error_maps import ERROR_COLOR_MAP, binary_error_map
 from .grids import compose_strip
+from .overlay import render_single_mask_overlay, render_gt_overlay
 
 LOGGER = logging.getLogger(__name__)
 
@@ -75,14 +76,27 @@ class SamplePanels:
 
     def ordered_panels(self) -> list[tuple[str, str, np.ndarray]]:
         """Return (key, filename_prefix, array) for every present column."""
+        pil_image = Image.fromarray(self.image)
         error = self.build_error()
+
+        # Prediction colour cycle — matches old-repo palette order
+        _PRED_COLORS = [
+            (230,  56,  70),   # A0 — red
+            ( 55, 120, 235),   # A2 — blue
+            ( 46, 125,  50),   # A3 — green
+            (244, 162,  97),   # Final — orange
+        ]
+
+        def _overlay(mask: np.ndarray, color: tuple) -> np.ndarray:
+            return np.asarray(render_single_mask_overlay(pil_image, mask, color), dtype=np.uint8)
+
         candidates = {
             "image":      self.image,
-            "gt":         _mask_to_rgb(self.gt),
-            "pred_a0":    _mask_to_rgb(self.pred_a0) if self.pred_a0 is not None else None,
-            "pred_a2":    _mask_to_rgb(self.pred_a2) if self.pred_a2 is not None else None,
-            "pred_a3":    _mask_to_rgb(self.pred_a3) if self.pred_a3 is not None else None,
-            "pred_final": _mask_to_rgb(self.pred_final) if self.pred_final is not None else None,
+            "gt":         np.asarray(render_gt_overlay(pil_image, self.gt), dtype=np.uint8),
+            "pred_a0":    _overlay(self.pred_a0,    _PRED_COLORS[0]) if self.pred_a0    is not None else None,
+            "pred_a2":    _overlay(self.pred_a2,    _PRED_COLORS[1]) if self.pred_a2    is not None else None,
+            "pred_a3":    _overlay(self.pred_a3,    _PRED_COLORS[2]) if self.pred_a3    is not None else None,
+            "pred_final": _overlay(self.pred_final, _PRED_COLORS[3]) if self.pred_final is not None else None,
             "error":      error,
         }
         out = []
@@ -91,13 +105,6 @@ class SamplePanels:
             if arr is not None:
                 out.append((key, prefix, arr))
         return out
-
-
-def _mask_to_rgb(mask: np.ndarray) -> np.ndarray:
-    """Binary mask → white-on-black uint8 RGB."""
-    m = np.asarray(mask, dtype=bool)
-    grey = (m.astype(np.uint8) * 255)
-    return np.stack([grey, grey, grey], axis=-1)
 
 
 @dataclass
