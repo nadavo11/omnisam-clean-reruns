@@ -1,0 +1,47 @@
+% GlaS qualitative comparison table — \input{} into your main document.
+% Columns: Image | GT | A0 | A2 | A3 | Error
+% (no staged-final checkpoint available for GlaS)
+
+\begin{figure}[htbp]
+  \centering
+  \setlength{\tabcolsep}{2pt}
+  \renewcommand{\arraystretch}{0.8}
+  \newcommand{\glasc}[1]{\includegraphics[width=0.16\linewidth]{figures/qualitative/glas/panels/#1}}
+  \begin{tabular}{cccccc}
+    \small Image &
+    \small GT &
+    \small A0 &
+    \small A2 &
+    \small A3 &
+    \small Error \\[3pt]
+    % --- sample 1 ---
+    \glasc{testA_1/image} &
+    \glasc{testA_1/gt} &
+    \glasc{testA_1/pred_a0} &
+    \glasc{testA_1/pred_a2} &
+    \glasc{testA_1/pred_a3} &
+    \glasc{testA_1/error_map} \\[2pt]
+    % --- sample 2 ---
+    \glasc{testA_2/image} &
+    \glasc{testA_2/gt} &
+    \glasc{testA_2/pred_a0} &
+    \glasc{testA_2/pred_a2} &
+    \glasc{testA_2/pred_a3} &
+    \glasc{testA_2/error_map} \\[2pt]
+    % --- sample 3 ---
+    \glasc{testA_3/image} &
+    \glasc{testA_3/gt} &
+    \glasc{testA_3/pred_a0} &
+    \glasc{testA_3/pred_a2} &
+    \glasc{testA_3/pred_a3} &
+    \glasc{testA_3/error_map} \\[2pt]
+  \end{tabular}
+  \caption{%
+    \textbf{Qualitative results on GlaS (test split).}
+    Columns: input image, ground-truth mask, A0 (FPN-2), A2 (coarse+fine), A3 (memory),
+    error map (\textcolor[RGB]{0,180,0}{green}=TP,
+               \textcolor[RGB]{220,0,0}{red}=FP,
+               \textcolor[RGB]{0,80,200}{blue}=FN).%
+  }
+  \label{fig:glas_qualitative}
+\end{figure}
