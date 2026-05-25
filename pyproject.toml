@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "frozen-sam-readout"
+version = "0.1.0"
+description = "Staged Multiscale Frozen-SAM3 Readout for medical segmentation"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "omniSAM" }]
+dependencies = [
+    "numpy>=1.24",
+    "torch>=2.1",
+    "Pillow>=10.0",
+    "PyYAML>=6.0",
+    "datasets>=2.18",
+]
+
+[project.optional-dependencies]
+sam = ["transformers>=4.40"]
+sam2 = ["sam2"]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"

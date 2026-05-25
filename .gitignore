@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+*.egg-info/
+build/
+dist/
+checkpoints/
+.cache/
+datasets/
+results/official_metrics/*/
+!results/official_metrics/.gitkeep
+paper_assets/tables/*.csv
+paper_assets/tables/*.tex
+paper_assets/figures/*.png
+paper_assets/qualitative/*.png

@@ -1,0 +1,29 @@
+# Locked official results for the Staged Multiscale Frozen-SAM3 Readout.
+# Numbers come from experiments/corrected_global_memory_feature_readout/phase4_phase5_summary.md.
+
+monuseg:
+  protocol: monuseg_strict_512
+  threshold: 0.5
+  metric_source: frozen_sam_readout/evaluation/metrics.py::compute_binary_metrics
+  variants:
+    a0_fpn2:           {direct_foreground_dice: 0.8103, direct_foreground_iou: 0.6835}
+    a2_fpn2_fpn1_refine: {direct_foreground_dice: 0.8423, direct_foreground_iou: 0.7284}
+    a3_memory:         {direct_foreground_dice: 0.8339, direct_foreground_iou: 0.7161}
+    a5_all_at_once:    {direct_foreground_dice: 0.8124, direct_foreground_iou: 0.6865}
+    final_staged:
+      direct_foreground_dice: 0.8545
+      direct_foreground_dice_std: 0.0050
+      direct_foreground_iou: 0.7467
+      direct_foreground_iou_std: 0.0073
+      seeds: 3
+    freeze_a3_control: {direct_foreground_dice: 0.8234, direct_foreground_iou: 0.7010}
+
+glas:
+  protocol: glas_fixed_224
+  threshold: 0.5
+  metric_source: frozen_sam_readout/evaluation/metrics.py::compute_binary_metrics
+  variants:
+    a0_fpn2:           {direct_foreground_dice: 0.9374, direct_foreground_iou: 0.8847}
+    a2_fpn2_fpn1_refine: {direct_foreground_dice: 0.9405, direct_foreground_iou: 0.8897}
+    a3_memory:         {direct_foreground_dice: 0.9243, direct_foreground_iou: 0.8635}
+    a5_safe:           {direct_foreground_dice: 0.9259, direct_foreground_iou: 0.8656}

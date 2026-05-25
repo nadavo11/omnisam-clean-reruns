@@ -1,0 +1,26 @@
+# Research-only: add a boundary BCE auxiliary loss on top of foreground BCE+Dice.
+
+dataset:
+  name: monuseg
+  root_or_name: RationAI/MoNuSeg
+  split: train
+  resize_before_sam:
+    height: 512
+    width: 512
+
+sam:
+  model_id: sam-vit-h
+  frozen: true
+  use_prompt_encoder: false
+  use_mask_decoder: false
+
+training:
+  epochs_stage1: 40
+  epochs_stage2: 40
+  optimizer: AdamW
+  lr: 1.0e-4
+  boundary_loss_weight: 0.1
+
+evaluation:
+  official: false
+  threshold: 0.5

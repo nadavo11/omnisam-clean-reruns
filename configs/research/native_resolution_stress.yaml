@@ -1,0 +1,26 @@
+# Research-only stress test: feed native-resolution images to the frozen SAM
+# encoder instead of the fixed-resize protocol. Headline metrics from this
+# config are NOT paper-safe.
+
+dataset:
+  name: monuseg
+  root_or_name: RationAI/MoNuSeg
+  split: test
+  resize_before_sam: null  # use native resolution
+  augmentation_policy: autosam_dense_v1
+
+sam:
+  model_id: sam-vit-h
+  frozen: true
+  use_prompt_encoder: false
+  use_mask_decoder: false
+  feature_levels: [fpn_2, fpn_1, fpn_0]
+
+evaluation:
+  official: false
+  threshold: 0.5
+
+guards:
+  fail_if_sam_trainable: true
+  fail_if_prompt_encoder_used: true
+  fail_if_mask_decoder_used: true
