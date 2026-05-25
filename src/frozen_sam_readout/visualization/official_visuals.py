@@ -79,24 +79,19 @@ class SamplePanels:
         pil_image = Image.fromarray(self.image)
         error = self.build_error()
 
-        # Prediction colour cycle — matches old-repo palette order
-        _PRED_COLORS = [
-            (230,  56,  70),   # A0 — red
-            ( 55, 120, 235),   # A2 — blue
-            ( 46, 125,  50),   # A3 — green
-            (244, 162,  97),   # Final — orange
-        ]
+        # All predictions rendered in the same red — consistent across ablation columns
+        _PRED_COLOR = (230, 56, 70)
 
-        def _overlay(mask: np.ndarray, color: tuple) -> np.ndarray:
-            return np.asarray(render_single_mask_overlay(pil_image, mask, color), dtype=np.uint8)
+        def _overlay(mask: np.ndarray) -> np.ndarray:
+            return np.asarray(render_single_mask_overlay(pil_image, mask, _PRED_COLOR), dtype=np.uint8)
 
         candidates = {
             "image":      self.image,
             "gt":         np.asarray(render_gt_overlay(pil_image, self.gt), dtype=np.uint8),
-            "pred_a0":    _overlay(self.pred_a0,    _PRED_COLORS[0]) if self.pred_a0    is not None else None,
-            "pred_a2":    _overlay(self.pred_a2,    _PRED_COLORS[1]) if self.pred_a2    is not None else None,
-            "pred_a3":    _overlay(self.pred_a3,    _PRED_COLORS[2]) if self.pred_a3    is not None else None,
-            "pred_final": _overlay(self.pred_final, _PRED_COLORS[3]) if self.pred_final is not None else None,
+            "pred_a0":    _overlay(self.pred_a0)    if self.pred_a0    is not None else None,
+            "pred_a2":    _overlay(self.pred_a2)    if self.pred_a2    is not None else None,
+            "pred_a3":    _overlay(self.pred_a3)    if self.pred_a3    is not None else None,
+            "pred_final": _overlay(self.pred_final) if self.pred_final is not None else None,
             "error":      error,
         }
         out = []
