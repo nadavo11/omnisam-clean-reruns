@@ -13,7 +13,7 @@ from pathlib import Path
 import torch
 
 from frozen_sam_readout.data import build_dataset_iter
-from frozen_sam_readout.evaluation.official_eval import run_official_eval
+from frozen_sam_readout.evaluation.official_eval import run_official_eval, write_per_sample_csv
 from frozen_sam_readout.evaluation.prediction_io import (
     build_official_metrics_payload,
     write_official_metrics_json,
@@ -133,7 +133,9 @@ def main(argv: list[str] | None = None) -> int:
         paper_headline_safe=not args.allow_nonofficial,
     )
     out_path = write_official_metrics_json(out_dir / "official_metrics.json", payload)
+    csv_path = write_per_sample_csv(out_dir / "per_sample_metrics.csv", result.per_sample_records)
     print(f"Wrote {out_path}")
+    print(f"Wrote {csv_path}")
     print(
         f"  direct_foreground_dice={result.dice:.4f}  "
         f"direct_foreground_iou={result.iou:.4f}"

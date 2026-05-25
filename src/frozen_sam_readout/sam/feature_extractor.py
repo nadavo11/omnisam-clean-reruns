@@ -193,7 +193,14 @@ class _Sam2PyramidExtractor:
 
 
 class _Sam3PyramidExtractor:
-    """Frozen SAM-3 image encoder exposing native ``backbone_fpn`` levels."""
+    """Frozen SAM-3 image encoder exposing native ``backbone_fpn`` levels.
+
+    Primary path: official ``sam3`` package (matches the source repo used for
+    all official results). Fallback: ``transformers.AutoModel`` — functionally
+    similar but uses HuggingFace-specific preprocessing that is NOT
+    paper-equivalent; outputs from the fallback path are marked
+    ``paper_headline_safe: false``.
+    """
 
     def __init__(
         self,
@@ -207,13 +214,43 @@ class _Sam3PyramidExtractor:
         self.requested_device = str(device)
         self.hf_token = hf_token
         self.official_checkpoint_path = official_checkpoint_path
-        self._bundle: Optional[Tuple[Any, Any, Any]] = None
+        self._bundle: Optional[Tuple] = None  # ("official"|"transformers", torch, ...)
+        self._using_official_backend: bool = False
 
     def extract_sam_pyramid(
         self, image: Image.Image
     ) -> Tuple[Tuple[int, int], Dict[str, np.ndarray]]:
-        torch_module, processor, model = self._ensure_bundle()
+        bundle = self._ensure_bundle()
         rgb = image.convert("RGB")
+        if bundle[0] == "official":
+            return self._extract_official(rgb, bundle)
+        return self._extract_transformers(rgb, bundle)
+
+    def _extract_official(
+        self, rgb: Image.Image, bundle: Tuple
+    ) -> Tuple[Tuple[int, int], Dict[str, np.ndarray]]:
+        _, torch_module, model, processor = bundle
+        # Mirrors source repo: Sam3Runner._ensure_official_backend path.
+        # processor.set_image populates backbone_fpn via the official SAM-3 forward.
+        with torch_module.inference_mode():
+            state = processor.set_image(rgb, state={})
+        backbone_out = state.get("backbone_out", {})
+        fpn_outputs = backbone_out.get("backbone_fpn")
+        if fpn_outputs is None:
+            raise FrozenSamPyramidExtractorRuntimeError(
+                "Official SAM-3 processor did not populate 'backbone_fpn' in backbone_out."
+            )
+        return self._pack_fpn(fpn_outputs, torch_module, rgb)
+
+    def _extract_transformers(
+        self, rgb: Image.Image, bundle: Tuple
+    ) -> Tuple[Tuple[int, int], Dict[str, np.ndarray]]:
+        _, torch_module, model, processor = bundle
+        LOGGER.warning(
+            "SAM-3 extractor: using transformers.AutoModel fallback — "
+            "preprocessing differs from the official SAM-3 package. "
+            "Outputs are NOT paper-equivalent. Set paper_headline_safe=false."
+        )
         inputs = processor(images=rgb, return_tensors="pt").to(model.device)
         with torch_module.inference_mode():
             outputs = model.vision_encoder(inputs["pixel_values"])
@@ -222,18 +259,31 @@ class _Sam3PyramidExtractor:
         )
         if fpn_outputs is None:
             raise FrozenSamPyramidExtractorRuntimeError(
-                "SAM-3 vision encoder did not return `backbone_fpn` features."
+                "SAM-3 transformers path: vision_encoder did not return backbone_fpn."
             )
+        return self._pack_fpn(fpn_outputs, torch_module, rgb)
+
+    @staticmethod
+    def _pack_fpn(
+        fpn_outputs: Any,
+        torch_module: Any,
+        rgb: Image.Image,
+    ) -> Tuple[Tuple[int, int], Dict[str, np.ndarray]]:
         ordered = sorted(
-            ((int(t.shape[2] * t.shape[3]), t) for t in fpn_outputs),
+            ((int(t.shape[-2] * t.shape[-1]), t) for t in fpn_outputs),
             key=lambda x: x[0],
             reverse=True,
         )
+        if len(ordered) < 3:
+            raise FrozenSamPyramidExtractorRuntimeError(
+                f"SAM-3 backbone_fpn returned {len(ordered)} levels; expected ≥3."
+            )
         finest, middle, coarsest = ordered[0][1], ordered[1][1], ordered[2][1]
 
-        def _to_np(t):
+        def _to_np(t: Any) -> np.ndarray:
+            arr = t[0] if t.ndim == 4 else t
             return np.asarray(
-                t[0].detach().cpu().to(torch_module.float32).numpy(), dtype=np.float32
+                arr.detach().cpu().to(torch_module.float32).numpy(), dtype=np.float32
             )
 
         pyramid = {
@@ -243,24 +293,47 @@ class _Sam3PyramidExtractor:
         }
         return (int(rgb.height), int(rgb.width)), pyramid
 
-    def _ensure_bundle(self) -> Tuple[Any, Any, Any]:
+    def _ensure_bundle(self) -> Tuple:
         if self._bundle is not None:
             return self._bundle
         try:
             import torch
-            from transformers import AutoModel, AutoProcessor
         except ImportError as exc:
-            raise FrozenSamPyramidExtractorRuntimeError(
-                "SAM-3 path requires the `transformers` package."
-            ) from exc
+            raise FrozenSamPyramidExtractorRuntimeError("PyTorch is required.") from exc
         device = _resolve_device(self.requested_device, torch)
         kwargs: Dict[str, Any] = {}
         if self.hf_token:
             kwargs["token"] = self.hf_token
+        # Primary: official sam3 package — identical to source repo used for official results.
+        try:
+            from sam3.model.sam3_image_processor import Sam3Processor as OfficialSam3Processor
+            from sam3 import Sam3Model  # type: ignore[import]
+
+            model = Sam3Model.from_pretrained(self.model_id, **kwargs)
+            model = model.to(device)
+            _freeze_module(model)
+            processor = OfficialSam3Processor(model=model, device=device, confidence_threshold=0.5)
+            self._bundle = ("official", torch, model, processor)
+            self._using_official_backend = True
+            LOGGER.info("SAM-3 extractor: loaded via official sam3 package on %s.", device)
+            return self._bundle
+        except ImportError:
+            LOGGER.warning(
+                "Official `sam3` package not found. Falling back to transformers.AutoModel. "
+                "Results will NOT be paper-equivalent (different preprocessing)."
+            )
+        # Fallback: transformers AutoModel.
+        try:
+            from transformers import AutoModel, AutoProcessor
+        except ImportError as exc:
+            raise FrozenSamPyramidExtractorRuntimeError(
+                "SAM-3 requires either the official `sam3` package or `transformers`."
+            ) from exc
         processor = AutoProcessor.from_pretrained(self.model_id, **kwargs)
         model = AutoModel.from_pretrained(self.model_id, **kwargs).to(device)
         _freeze_module(model)
-        self._bundle = (torch, processor, model)
+        self._bundle = ("transformers", torch, model, processor)
+        self._using_official_backend = False
         return self._bundle
 
 
