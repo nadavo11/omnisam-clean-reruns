@@ -1,14 +1,15 @@
-"""Grid composition utilities."""
+"""Grid composition — clean, text-free panel strips for QC and wandb."""
 
 from __future__ import annotations
 
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
 
 def _to_rgb(arr: np.ndarray) -> np.ndarray:
+    """Coerce any array to uint8 RGB [H,W,3]."""
     if arr.dtype != np.uint8:
         arr = (np.clip(arr, 0.0, 1.0) * 255).astype(np.uint8)
     if arr.ndim == 2:
@@ -18,34 +19,36 @@ def _to_rgb(arr: np.ndarray) -> np.ndarray:
     return arr
 
 
-def compose_row(
+def compose_strip(
     panels: Sequence[np.ndarray],
-    titles: Optional[Sequence[str]] = None,
-    pad: int = 4,
-    title_height: int = 18,
+    gap: int = 2,
+    gap_color: tuple[int, int, int] = (40, 40, 40),
 ) -> Image.Image:
-    """Horizontally concatenate ``panels`` (numpy arrays) with optional titles."""
+    """Horizontally concatenate panels with a thin dark gap. No text.
 
-    rgb_panels = [_to_rgb(p) for p in panels]
-    heights = [p.shape[0] for p in rgb_panels]
-    widths = [p.shape[1] for p in rgb_panels]
-    h = max(heights)
-    total_w = sum(widths) + pad * (len(rgb_panels) - 1)
-    total_h = h + (title_height if titles else 0)
-    canvas = Image.new("RGB", (total_w, total_h), color=(255, 255, 255))
-    x = 0
-    for idx, panel in enumerate(rgb_panels):
-        img = Image.fromarray(panel)
-        canvas.paste(img, (x, title_height if titles else 0))
-        x += widths[idx] + pad
-    if titles:
-        draw = ImageDraw.Draw(canvas)
-        try:
-            font = ImageFont.load_default()
-        except Exception:
-            font = None
-        x = 0
-        for idx, title in enumerate(titles):
-            draw.text((x + 2, 2), str(title), fill=(0, 0, 0), font=font)
-            x += widths[idx] + pad
-    return canvas
+    All panels are padded to the same height before concatenation.
+
+    Args:
+        panels: Sequence of H×W or H×W×3 uint8/float arrays.
+        gap: Width in pixels of the separator between panels.
+        gap_color: RGB color of the separator.
+
+    Returns:
+        PIL Image: the composed strip.
+    """
+    rgb = [_to_rgb(p) for p in panels]
+    h = max(p.shape[0] for p in rgb)
+
+    pieces: list[np.ndarray] = []
+    sep = np.full((h, gap, 3), gap_color, dtype=np.uint8)
+
+    for i, panel in enumerate(rgb):
+        # Pad shorter panels to common height with black rows at the bottom.
+        if panel.shape[0] < h:
+            pad = np.zeros((h - panel.shape[0], panel.shape[1], 3), dtype=np.uint8)
+            panel = np.vstack([panel, pad])
+        pieces.append(panel)
+        if i < len(rgb) - 1:
+            pieces.append(sep)
+
+    return Image.fromarray(np.concatenate(pieces, axis=1))

@@ -1,5 +1,12 @@
-from .official_visuals import make_comparison_grid
-from .grids import compose_row
-from .error_maps import binary_error_map
+from .official_visuals import SamplePanels, save_official_visuals, VisualsManifest
+from .grids import compose_strip
+from .error_maps import binary_error_map, ERROR_COLOR_MAP
 
-__all__ = ["make_comparison_grid", "compose_row", "binary_error_map"]
+__all__ = [
+    "SamplePanels",
+    "save_official_visuals",
+    "VisualsManifest",
+    "compose_strip",
+    "binary_error_map",
+    "ERROR_COLOR_MAP",
+]
