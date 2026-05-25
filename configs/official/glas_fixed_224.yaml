@@ -1,6 +1,6 @@
 dataset:
   name: glas
-  root_or_name: ./datasets/glas
+  root_or_name: /storage/nada/texture-representations/datasets/GlaS
   split: test
   resize_before_sam:
     height: 224
@@ -8,7 +8,7 @@ dataset:
   augmentation_policy: autosam_dense_v1
 
 sam:
-  model_id: sam-vit-h
+  model_id: facebook/sam3
   frozen: true
   use_prompt_encoder: false
   use_mask_decoder: false

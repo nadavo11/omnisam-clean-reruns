@@ -72,18 +72,51 @@ Generated 2026-05-25 via `make_paper_tables.py`:
 
 ---
 
-## 5. Pending
+## 5. Qualitative Visuals
 
-- [ ] Retrieve `ckpt-probe-9591552` output — needed for checkpoint key remapper
-- [ ] Update `a5_all_at_once` lock value from 0.8124 → 0.8392 (decision required)
-- [ ] Per-sample CSV for GlaS runs (not in source summary.json, needs cluster re-eval)
-- [ ] End-to-end eval with migrated model code (blocked on key remapper)
+Generated via `make_official_visuals.py` using `load_source_checkpoint_head()` (compat loader):
+
+| Dataset | Samples | Status |
+|---|---|---|
+| MoNuSeg | 14 | Succeeded (all 4 variants: A0/A2/A3/final) |
+| GlaS | 10 | Succeeded (3 variants: A0/A2/A3; no final_staged checkpoint) |
+
+Visuals stored at `/storage/nada/outputs/official_visuals/{monuseg,glas}/`
+Sample grids pulled to `paper_export/figures/qualitative/`.
+
+## 6. Source Compatibility Loader
+
+Built `src/frozen_sam_readout/models/compat/source_loader.py`:
+- Reconstructs exact source architectures (A0/A2/A3/final_staged)
+- Source uses Conv2d(bias=True) + GroupNorm — NOT directly remappable to omniSAM Conv2d(bias=False)
+- Loads `head_state_dict` verbatim with `strict=True`; key auto-detection based on checkpoint keys
+- **No weight remapping needed** — compat loader is the integration point
+
+Key discoveries from `head-key-probe`:
+- A0: `projections.fpn_2.*` + `decoder.*` + `classifier.*` (12 keys, flat structure)
+- A2: `coarse_head.*` + `fine_projection.*` + `residual_decoder.*` + `residual_scale` (25 keys, nested; fine_dim=32)
+- A3: concat(primary+skip)=256ch before decoder (first decoder conv: [128,256,3,3])
+- final_staged: same as A3 + `raw_alpha` + `f0_projection.*` + `f0_decoder.*` (compact 2-layer decoder 128→64→1)
+
+## 7. Config Fixes Applied
+
+- `monuseg_strict_512.yaml`: `model_id: facebook/sam3` (was `sam-vit-h`)
+- `glas_fixed_224.yaml`: `model_id: facebook/sam3`, `root_or_name: /storage/nada/texture-representations/datasets/GlaS`
+
+## 8. Pending
+
+- [x] A5 lock updated to 0.8392/0.7239
+- [x] GlaS per-sample CSV added (80 rows, test split, a0_fpn2 and a5_all_at_once)
+- [x] MoNuSeg per-sample CSV added (14 rows, TEST SPLIT — headline 0.8103 is from TRAIN split of 30 patches, no per-sample breakdown available)
+- [x] Qualitative visuals generated
+- [ ] Fill GPU-hours in reproducibility_statement.tex
+- [ ] Add method architecture diagram
 
 ---
 
-## 6. Test Suite
+## 9. Test Suite
 
-32 tests passing as of commit 9591552.
+41 passed, 1 skipped as of final commit.
 
 ```
 pytest tests/ -v  # 32 passed

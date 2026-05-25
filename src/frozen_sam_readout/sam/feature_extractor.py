@@ -112,6 +112,32 @@ def _freeze_module(module: Any) -> None:
     module.eval()
 
 
+def _find_local_sam3_checkpoint() -> "Optional[Path]":
+    """Search common HF cache locations for a local facebook/sam3 checkpoint."""
+    import os
+    from pathlib import Path
+
+    # HF hub cache layout: <HF_HOME>/hub/models--facebook--sam3/snapshots/<sha>/sam3.pt
+    candidates = []
+    hf_home = os.environ.get("HF_HOME") or os.path.join(os.path.expanduser("~"), ".cache", "huggingface")
+    snap_root = Path(hf_home) / "hub" / "models--facebook--sam3" / "snapshots"
+    if snap_root.is_dir():
+        for snap in sorted(snap_root.iterdir(), reverse=True):
+            p = snap / "sam3.pt"
+            if p.exists():
+                candidates.append(p)
+    # Also check RUNAI cache root
+    runai_cache = os.environ.get("RUNAI_CACHE_ROOT")
+    if runai_cache:
+        alt = Path(runai_cache) / "huggingface" / "hub" / "models--facebook--sam3" / "snapshots"
+        if alt.is_dir():
+            for snap in sorted(alt.iterdir(), reverse=True):
+                p = snap / "sam3.pt"
+                if p.exists():
+                    candidates.append(p)
+    return candidates[0] if candidates else None
+
+
 class _Sam2PyramidExtractor:
     """Frozen SAM-2 image encoder exposing fpn_2/fpn_1/fpn_0."""
 
@@ -305,14 +331,23 @@ class _Sam3PyramidExtractor:
         if self.hf_token:
             kwargs["token"] = self.hf_token
         # Primary: official sam3 package — identical to source repo used for official results.
+        # Uses build_sam3_image_model (the package API); Sam3Model.from_pretrained does not exist.
         try:
             from sam3.model.sam3_image_processor import Sam3Processor as OfficialSam3Processor
-            from sam3 import Sam3Model  # type: ignore[import]
+            from sam3 import build_sam3_image_model  # type: ignore[import]
 
-            model = Sam3Model.from_pretrained(self.model_id, **kwargs)
-            model = model.to(device)
+            # Prefer local HF cache over network download.
+            local_ckpt = _find_local_sam3_checkpoint()
+            if local_ckpt:
+                LOGGER.info("SAM-3: using local checkpoint %s", local_ckpt)
+                model = build_sam3_image_model(
+                    checkpoint_path=str(local_ckpt), load_from_HF=False, device=str(device),
+                )
+            else:
+                LOGGER.info("SAM-3: downloading facebook/sam3 from HuggingFace")
+                model = build_sam3_image_model(load_from_HF=True, device=str(device))
             _freeze_module(model)
-            processor = OfficialSam3Processor(model=model, device=device, confidence_threshold=0.5)
+            processor = OfficialSam3Processor(model, device=str(device), confidence_threshold=0.5)
             self._bundle = ("official", torch, model, processor)
             self._using_official_backend = True
             LOGGER.info("SAM-3 extractor: loaded via official sam3 package on %s.", device)

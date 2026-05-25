@@ -1,0 +1,157 @@
+{
+  "dataset": "glas",
+  "protocol": "glas_fixed_224",
+  "config": "/storage/nada/omniSAM/configs/official/glas_fixed_224.yaml",
+  "checkpoints": {
+    "a0_fpn2": "/storage/nada/outputs/migrated_heads_glas/A0/checkpoint.pt",
+    "a2_fpn2_fpn1_refine": "/storage/nada/outputs/migrated_heads_glas/A2/checkpoint.pt",
+    "a3_memory": "/storage/nada/outputs/migrated_heads_glas/A3/checkpoint.pt",
+    "final_staged": ""
+  },
+  "samples": [
+    {
+      "n": 0,
+      "sample_id": "testA_1",
+      "panels": {
+        "image": "panels/testA_1/00_image.png",
+        "gt": "panels/testA_1/01_gt.png",
+        "pred_a0": "panels/testA_1/02_pred_a0.png",
+        "pred_a2": "panels/testA_1/03_pred_a2.png",
+        "pred_a3": "panels/testA_1/04_pred_a3.png"
+      },
+      "grid": "grids/grid_00_testA_1.png"
+    },
+    {
+      "n": 1,
+      "sample_id": "testA_2",
+      "panels": {
+        "image": "panels/testA_2/00_image.png",
+        "gt": "panels/testA_2/01_gt.png",
+        "pred_a0": "panels/testA_2/02_pred_a0.png",
+        "pred_a2": "panels/testA_2/03_pred_a2.png",
+        "pred_a3": "panels/testA_2/04_pred_a3.png"
+      },
+      "grid": "grids/grid_01_testA_2.png"
+    },
+    {
+      "n": 2,
+      "sample_id": "testA_3",
+      "panels": {
+        "image": "panels/testA_3/00_image.png",
+        "gt": "panels/testA_3/01_gt.png",
+        "pred_a0": "panels/testA_3/02_pred_a0.png",
+        "pred_a2": "panels/testA_3/03_pred_a2.png",
+        "pred_a3": "panels/testA_3/04_pred_a3.png"
+      },
+      "grid": "grids/grid_02_testA_3.png"
+    },
+    {
+      "n": 3,
+      "sample_id": "testA_4",
+      "panels": {
+        "image": "panels/testA_4/00_image.png",
+        "gt": "panels/testA_4/01_gt.png",
+        "pred_a0": "panels/testA_4/02_pred_a0.png",
+        "pred_a2": "panels/testA_4/03_pred_a2.png",
+        "pred_a3": "panels/testA_4/04_pred_a3.png"
+      },
+      "grid": "grids/grid_03_testA_4.png"
+    },
+    {
+      "n": 4,
+      "sample_id": "testA_5",
+      "panels": {
+        "image": "panels/testA_5/00_image.png",
+        "gt": "panels/testA_5/01_gt.png",
+        "pred_a0": "panels/testA_5/02_pred_a0.png",
+        "pred_a2": "panels/testA_5/03_pred_a2.png",
+        "pred_a3": "panels/testA_5/04_pred_a3.png"
+      },
+      "grid": "grids/grid_04_testA_5.png"
+    },
+    {
+      "n": 5,
+      "sample_id": "testA_6",
+      "panels": {
+        "image": "panels/testA_6/00_image.png",
+        "gt": "panels/testA_6/01_gt.png",
+        "pred_a0": "panels/testA_6/02_pred_a0.png",
+        "pred_a2": "panels/testA_6/03_pred_a2.png",
+        "pred_a3": "panels/testA_6/04_pred_a3.png"
+      },
+      "grid": "grids/grid_05_testA_6.png"
+    },
+    {
+      "n": 6,
+      "sample_id": "testA_7",
+      "panels": {
+        "image": "panels/testA_7/00_image.png",
+        "gt": "panels/testA_7/01_gt.png",
+        "pred_a0": "panels/testA_7/02_pred_a0.png",
+        "pred_a2": "panels/testA_7/03_pred_a2.png",
+        "pred_a3": "panels/testA_7/04_pred_a3.png"
+      },
+      "grid": "grids/grid_06_testA_7.png"
+    },
+    {
+      "n": 7,
+      "sample_id": "testA_8",
+      "panels": {
+        "image": "panels/testA_8/00_image.png",
+        "gt": "panels/testA_8/01_gt.png",
+        "pred_a0": "panels/testA_8/02_pred_a0.png",
+        "pred_a2": "panels/testA_8/03_pred_a2.png",
+        "pred_a3": "panels/testA_8/04_pred_a3.png"
+      },
+      "grid": "grids/grid_07_testA_8.png"
+    },
+    {
+      "n": 8,
+      "sample_id": "testA_9",
+      "panels": {
+        "image": "panels/testA_9/00_image.png",
+        "gt": "panels/testA_9/01_gt.png",
+        "pred_a0": "panels/testA_9/02_pred_a0.png",
+        "pred_a2": "panels/testA_9/03_pred_a2.png",
+        "pred_a3": "panels/testA_9/04_pred_a3.png"
+      },
+      "grid": "grids/grid_08_testA_9.png"
+    },
+    {
+      "n": 9,
+      "sample_id": "testA_10",
+      "panels": {
+        "image": "panels/testA_10/00_image.png",
+        "gt": "panels/testA_10/01_gt.png",
+        "pred_a0": "panels/testA_10/02_pred_a0.png",
+        "pred_a2": "panels/testA_10/03_pred_a2.png",
+        "pred_a3": "panels/testA_10/04_pred_a3.png"
+      },
+      "grid": "grids/grid_09_testA_10.png"
+    }
+  ],
+  "error_color_map": {
+    "true_positive": [
+      180,
+      180,
+      180
+    ],
+    "false_positive": [
+      0,
+      200,
+      0
+    ],
+    "false_negative": [
+      200,
+      0,
+      0
+    ],
+    "true_negative": [
+      0,
+      0,
+      0
+    ]
+  },
+  "renderer_version": "official_visuals.py::save_official_visuals",
+  "generated_at": "2026-05-25T14:54:00.399899+00:00"
+}

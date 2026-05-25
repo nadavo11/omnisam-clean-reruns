@@ -34,9 +34,9 @@ paper_export/
 
 ## Pending Before Submission
 
-- [ ] Update A5 lock value (0.8124 → 0.8392) after decision
-- [ ] Add qualitative figure panels from `outputs/official_visuals/`
+- [x] A5 lock updated to 0.8392/0.7239 (fixed-resize checkpoint); old 0.8124 audited in metric_correction_table
+- [x] Qualitative QC grids: 3 MoNuSeg + 3 GlaS pulled to `figures/qualitative/`; manifests + figure_grid.tex included
 - [ ] Fill in GPU-hours in `latex_snippets/reproducibility_statement.tex`
 - [ ] Add method diagram to `figures/method/`
-- [ ] Per-sample CSV for GlaS (re-eval needed on cluster)
-- [ ] Checkpoint key remapper for migrated model loading
+- [x] GlaS per-sample CSV: a0_fpn2 (80 rows) + a5_all_at_once (80 rows) in `metrics/glas/`
+- [x] Checkpoint compat loader: `src/frozen_sam_readout/models/compat/` loads A0/A2/A3/final_staged from source checkpoints

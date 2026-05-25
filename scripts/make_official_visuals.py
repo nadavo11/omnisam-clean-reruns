@@ -32,14 +32,10 @@ import torch.nn.functional as F
 from PIL import Image
 
 from frozen_sam_readout.data import build_dataset_iter
-from frozen_sam_readout.models.registry import build_head
+from frozen_sam_readout.models.compat.source_loader import load_source_checkpoint_head
 from frozen_sam_readout.sam import build_frozen_sam_pyramid_extractor
-from frozen_sam_readout.training.checkpointing import load_checkpoint
 from frozen_sam_readout.utils import load_yaml_config
 from frozen_sam_readout.visualization import SamplePanels, save_official_visuals
-
-
-_DEFAULT_CHANNELS = {"f2_channels": 256, "f1_channels": 64, "f0_channels": 32}
 
 # Registry key → (SamplePanels field name, checkpoint subfolder hint)
 _VARIANT_MAP: list[tuple[str, str, str]] = [
@@ -54,16 +50,6 @@ def _resolve_device(device_arg: str) -> torch.device:
     if device_arg in {"auto", "cuda"} and torch.cuda.is_available():
         return torch.device("cuda")
     return torch.device("cpu")
-
-
-def _build_variant_head(variant: str, device: torch.device) -> torch.nn.Module:
-    kwargs = dict(_DEFAULT_CHANNELS)
-    if variant == "a0_fpn2":
-        kwargs.pop("f1_channels")
-        kwargs.pop("f0_channels")
-    elif variant in {"a2_fpn2_fpn1_refine", "a3_memory"}:
-        kwargs.pop("f0_channels")
-    return build_head(variant, **kwargs).to(device)
 
 
 def _find_checkpoint(ckpt_dir: Path | None, subfolder: str) -> Path | None:
@@ -137,14 +123,15 @@ def main(argv=None) -> int:
     checkpoint_paths: dict[str, str] = {}
     for variant, _field, subfolder in _VARIANT_MAP:
         ckpt = _find_checkpoint(ckpt_root, subfolder)
-        head = _build_variant_head(variant, device)
         if ckpt is not None:
-            load_checkpoint(str(ckpt), model=head, map_location=str(device))
+            head = load_source_checkpoint_head(str(ckpt), device=device)
             checkpoint_paths[variant] = str(ckpt)
             print(f"  Loaded {variant} ← {ckpt}")
         else:
-            print(f"  [skip] no checkpoint found for {variant} — using random weights")
+            print(f"  [skip] no checkpoint found for {variant} — skipping variant")
             checkpoint_paths[variant] = ""
+            heads[variant] = None
+            continue
         heads[variant] = head
 
     # ── Dataset ───────────────────────────────────────────────────────────────
@@ -152,11 +139,11 @@ def main(argv=None) -> int:
     resize = ds_cfg.get("resize_before_sam")
     resize_hw = (int(resize["height"]), int(resize["width"])) if resize else None
 
-    samples = list(build_dataset_iter(
-        str(ds_cfg["name"]),
-        split=ds_cfg.get("split", "test"),
-        limit=args.limit,
-    ))
+    ds_kwargs = dict(split=ds_cfg.get("split", "test"), limit=args.limit)
+    root_or_name = ds_cfg.get("root_or_name")
+    if root_or_name:
+        ds_kwargs["dataset_root"] = root_or_name
+    samples = list(build_dataset_iter(str(ds_cfg["name"]), **ds_kwargs))
 
     # ── wandb ─────────────────────────────────────────────────────────────────
     wandb_run = None
@@ -183,9 +170,10 @@ def main(argv=None) -> int:
 
         preds: dict[str, np.ndarray] = {}
         for variant, field_name, _sub in _VARIANT_MAP:
-            preds[field_name] = _predict(
-                heads[variant], pyramid, gt.shape, device, args.threshold
-            )
+            h = heads.get(variant)
+            if h is None:
+                continue
+            preds[field_name] = _predict(h, pyramid, gt.shape, device, args.threshold)
 
         all_panels.append(SamplePanels(
             sample_id=sample_id,

@@ -1,5 +1,10 @@
 # Locked official results for the Staged Multiscale Frozen-SAM3 Readout.
 # Numbers come from experiments/corrected_global_memory_feature_readout/phase4_phase5_summary.md.
+#
+# 2026-05-25: a5_all_at_once updated from obsolete 0.8124/0.6865 (run ce-monu-a5-v2-2930351,
+# pre-fixed-resize protocol) to 0.8392/0.7239 from the fixed-resize checkpoint
+# monuseg_A5lrn_fpn2fpn1f0lrn_512_s0_e40, which is the direct_foreground_dice/iou from
+# eval_official.py. The old value is preserved only in metric_correction_table as an audit entry.
 
 monuseg:
   protocol: monuseg_strict_512
@@ -9,7 +14,7 @@ monuseg:
     a0_fpn2:           {direct_foreground_dice: 0.8103, direct_foreground_iou: 0.6835}
     a2_fpn2_fpn1_refine: {direct_foreground_dice: 0.8423, direct_foreground_iou: 0.7284}
     a3_memory:         {direct_foreground_dice: 0.8339, direct_foreground_iou: 0.7161}
-    a5_all_at_once:    {direct_foreground_dice: 0.8124, direct_foreground_iou: 0.6865}
+    a5_all_at_once:    {direct_foreground_dice: 0.8392, direct_foreground_iou: 0.7239}
     final_staged:
       direct_foreground_dice: 0.8545
       direct_foreground_dice_std: 0.0050
