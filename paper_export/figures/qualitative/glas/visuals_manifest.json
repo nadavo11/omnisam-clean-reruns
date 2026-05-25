@@ -1,12 +1,11 @@
 {
   "dataset": "glas",
   "protocol": "glas_fixed_224",
-  "config": "/storage/nada/omniSAM/configs/official/glas_fixed_224.yaml",
+  "config": "configs/official/glas_fixed_224.yaml",
   "checkpoints": {
-    "a0_fpn2": "/storage/nada/outputs/migrated_heads_glas/A0/checkpoint.pt",
-    "a2_fpn2_fpn1_refine": "/storage/nada/outputs/migrated_heads_glas/A2/checkpoint.pt",
-    "a3_memory": "/storage/nada/outputs/migrated_heads_glas/A3/checkpoint.pt",
-    "final_staged": ""
+    "a0_fpn2": "/storage/nada/outputs/fixed_resize_enhancement/glas_A0_fpn2_d128_224_autosamaug_e200/checkpoint.pt",
+    "a2_fpn2_fpn1_refine": "/storage/nada/outputs/fixed_resize_enhancement/glas_A2_fpn2_fpn1refine_d128_224_autosamaug_e200/checkpoint.pt",
+    "a3_memory": "/storage/nada/outputs/fixed_resize_enhancement/glas_A3_m8_fpn2fpn1memoryattn_224_autosamaug_e200/checkpoint.pt"
   },
   "samples": [
     {
@@ -153,5 +152,5 @@
     ]
   },
   "renderer_version": "official_visuals.py::save_official_visuals",
-  "generated_at": "2026-05-25T14:54:00.399899+00:00"
+  "generated_at": "2026-05-25T18:16:29.645719+00:00"
 }

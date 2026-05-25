@@ -1,209 +1,209 @@
 {
   "dataset": "monuseg",
   "protocol": "monuseg_strict_512",
-  "config": "/storage/nada/omniSAM/configs/official/monuseg_strict_512.yaml",
+  "config": "configs/official/monuseg_strict_512.yaml",
   "checkpoints": {
-    "a0_fpn2": "/storage/nada/outputs/migrated_heads/A0/checkpoint.pt",
-    "a2_fpn2_fpn1_refine": "/storage/nada/outputs/migrated_heads/A2/checkpoint.pt",
-    "a3_memory": "/storage/nada/outputs/migrated_heads/A3/checkpoint.pt",
-    "final_staged": "/storage/nada/outputs/migrated_heads/final_staged/checkpoint.pt"
+    "a0_fpn2": "/storage/nada/outputs/fixed_resize_enhancement/monuseg_A0_fpn2_d128_512_e40/checkpoint.pt",
+    "a2_fpn2_fpn1_refine": "/storage/nada/outputs/fixed_resize_enhancement/monuseg_A2_fpn2fpn1refine_512_s0_e40/checkpoint.pt",
+    "a3_memory": "/storage/nada/outputs/fixed_resize_enhancement/monuseg_A3_fpn2fpn1memoryattn_512_m8_s0_e40/checkpoint.pt",
+    "final_staged": "/storage/nada/outputs/fixed_resize_enhancement/monuseg_A5lrn_staged_from_A3s0_e40/checkpoint.pt"
   },
   "samples": [
     {
       "n": 0,
-      "sample_id": "TCGA-38-6178-01Z-00-DX1",
+      "sample_id": "TCGA-FG-A4MU-01B-01-TS1",
       "panels": {
-        "image": "panels/TCGA-38-6178-01Z-00-DX1/00_image.png",
-        "gt": "panels/TCGA-38-6178-01Z-00-DX1/01_gt.png",
-        "pred_a0": "panels/TCGA-38-6178-01Z-00-DX1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-38-6178-01Z-00-DX1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-38-6178-01Z-00-DX1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-38-6178-01Z-00-DX1/05_pred_final.png",
-        "error": "panels/TCGA-38-6178-01Z-00-DX1/06_error.png"
+        "image": "panels/TCGA-FG-A4MU-01B-01-TS1/00_image.png",
+        "gt": "panels/TCGA-FG-A4MU-01B-01-TS1/01_gt.png",
+        "pred_a0": "panels/TCGA-FG-A4MU-01B-01-TS1/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-FG-A4MU-01B-01-TS1/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-FG-A4MU-01B-01-TS1/04_pred_a3.png",
+        "pred_final": "panels/TCGA-FG-A4MU-01B-01-TS1/05_pred_final.png",
+        "error": "panels/TCGA-FG-A4MU-01B-01-TS1/06_error.png"
       },
-      "grid": "grids/grid_00_TCGA-38-6178-01Z-00-DX1.png"
+      "grid": "grids/grid_00_TCGA-FG-A4MU-01B-01-TS1.png"
     },
     {
       "n": 1,
-      "sample_id": "TCGA-HE-7129-01Z-00-DX1",
+      "sample_id": "TCGA-44-2665-01B-06-BS6",
       "panels": {
-        "image": "panels/TCGA-HE-7129-01Z-00-DX1/00_image.png",
-        "gt": "panels/TCGA-HE-7129-01Z-00-DX1/01_gt.png",
-        "pred_a0": "panels/TCGA-HE-7129-01Z-00-DX1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-HE-7129-01Z-00-DX1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-HE-7129-01Z-00-DX1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-HE-7129-01Z-00-DX1/05_pred_final.png",
-        "error": "panels/TCGA-HE-7129-01Z-00-DX1/06_error.png"
+        "image": "panels/TCGA-44-2665-01B-06-BS6/00_image.png",
+        "gt": "panels/TCGA-44-2665-01B-06-BS6/01_gt.png",
+        "pred_a0": "panels/TCGA-44-2665-01B-06-BS6/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-44-2665-01B-06-BS6/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-44-2665-01B-06-BS6/04_pred_a3.png",
+        "pred_final": "panels/TCGA-44-2665-01B-06-BS6/05_pred_final.png",
+        "error": "panels/TCGA-44-2665-01B-06-BS6/06_error.png"
       },
-      "grid": "grids/grid_01_TCGA-HE-7129-01Z-00-DX1.png"
+      "grid": "grids/grid_01_TCGA-44-2665-01B-06-BS6.png"
     },
     {
       "n": 2,
-      "sample_id": "TCGA-A7-A13E-01Z-00-DX1",
+      "sample_id": "TCGA-2Z-A9J9-01A-01-TS1",
       "panels": {
-        "image": "panels/TCGA-A7-A13E-01Z-00-DX1/00_image.png",
-        "gt": "panels/TCGA-A7-A13E-01Z-00-DX1/01_gt.png",
-        "pred_a0": "panels/TCGA-A7-A13E-01Z-00-DX1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-A7-A13E-01Z-00-DX1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-A7-A13E-01Z-00-DX1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-A7-A13E-01Z-00-DX1/05_pred_final.png",
-        "error": "panels/TCGA-A7-A13E-01Z-00-DX1/06_error.png"
+        "image": "panels/TCGA-2Z-A9J9-01A-01-TS1/00_image.png",
+        "gt": "panels/TCGA-2Z-A9J9-01A-01-TS1/01_gt.png",
+        "pred_a0": "panels/TCGA-2Z-A9J9-01A-01-TS1/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-2Z-A9J9-01A-01-TS1/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-2Z-A9J9-01A-01-TS1/04_pred_a3.png",
+        "pred_final": "panels/TCGA-2Z-A9J9-01A-01-TS1/05_pred_final.png",
+        "error": "panels/TCGA-2Z-A9J9-01A-01-TS1/06_error.png"
       },
-      "grid": "grids/grid_02_TCGA-A7-A13E-01Z-00-DX1.png"
+      "grid": "grids/grid_02_TCGA-2Z-A9J9-01A-01-TS1.png"
     },
     {
       "n": 3,
-      "sample_id": "TCGA-HE-7128-01Z-00-DX1",
+      "sample_id": "TCGA-ZF-A9R5-01A-01-TS1",
       "panels": {
-        "image": "panels/TCGA-HE-7128-01Z-00-DX1/00_image.png",
-        "gt": "panels/TCGA-HE-7128-01Z-00-DX1/01_gt.png",
-        "pred_a0": "panels/TCGA-HE-7128-01Z-00-DX1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-HE-7128-01Z-00-DX1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-HE-7128-01Z-00-DX1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-HE-7128-01Z-00-DX1/05_pred_final.png",
-        "error": "panels/TCGA-HE-7128-01Z-00-DX1/06_error.png"
+        "image": "panels/TCGA-ZF-A9R5-01A-01-TS1/00_image.png",
+        "gt": "panels/TCGA-ZF-A9R5-01A-01-TS1/01_gt.png",
+        "pred_a0": "panels/TCGA-ZF-A9R5-01A-01-TS1/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-ZF-A9R5-01A-01-TS1/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-ZF-A9R5-01A-01-TS1/04_pred_a3.png",
+        "pred_final": "panels/TCGA-ZF-A9R5-01A-01-TS1/05_pred_final.png",
+        "error": "panels/TCGA-ZF-A9R5-01A-01-TS1/06_error.png"
       },
-      "grid": "grids/grid_03_TCGA-HE-7128-01Z-00-DX1.png"
+      "grid": "grids/grid_03_TCGA-ZF-A9R5-01A-01-TS1.png"
     },
     {
       "n": 4,
-      "sample_id": "TCGA-G9-6356-01Z-00-DX1",
+      "sample_id": "TCGA-69-7764-01A-01-TS1",
       "panels": {
-        "image": "panels/TCGA-G9-6356-01Z-00-DX1/00_image.png",
-        "gt": "panels/TCGA-G9-6356-01Z-00-DX1/01_gt.png",
-        "pred_a0": "panels/TCGA-G9-6356-01Z-00-DX1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-G9-6356-01Z-00-DX1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-G9-6356-01Z-00-DX1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-G9-6356-01Z-00-DX1/05_pred_final.png",
-        "error": "panels/TCGA-G9-6356-01Z-00-DX1/06_error.png"
+        "image": "panels/TCGA-69-7764-01A-01-TS1/00_image.png",
+        "gt": "panels/TCGA-69-7764-01A-01-TS1/01_gt.png",
+        "pred_a0": "panels/TCGA-69-7764-01A-01-TS1/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-69-7764-01A-01-TS1/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-69-7764-01A-01-TS1/04_pred_a3.png",
+        "pred_final": "panels/TCGA-69-7764-01A-01-TS1/05_pred_final.png",
+        "error": "panels/TCGA-69-7764-01A-01-TS1/06_error.png"
       },
-      "grid": "grids/grid_04_TCGA-G9-6356-01Z-00-DX1.png"
+      "grid": "grids/grid_04_TCGA-69-7764-01A-01-TS1.png"
     },
     {
       "n": 5,
-      "sample_id": "TCGA-AY-A8YK-01A-01-TS1",
+      "sample_id": "TCGA-A6-6782-01A-01-BS1",
       "panels": {
-        "image": "panels/TCGA-AY-A8YK-01A-01-TS1/00_image.png",
-        "gt": "panels/TCGA-AY-A8YK-01A-01-TS1/01_gt.png",
-        "pred_a0": "panels/TCGA-AY-A8YK-01A-01-TS1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-AY-A8YK-01A-01-TS1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-AY-A8YK-01A-01-TS1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-AY-A8YK-01A-01-TS1/05_pred_final.png",
-        "error": "panels/TCGA-AY-A8YK-01A-01-TS1/06_error.png"
+        "image": "panels/TCGA-A6-6782-01A-01-BS1/00_image.png",
+        "gt": "panels/TCGA-A6-6782-01A-01-BS1/01_gt.png",
+        "pred_a0": "panels/TCGA-A6-6782-01A-01-BS1/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-A6-6782-01A-01-BS1/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-A6-6782-01A-01-BS1/04_pred_a3.png",
+        "pred_final": "panels/TCGA-A6-6782-01A-01-BS1/05_pred_final.png",
+        "error": "panels/TCGA-A6-6782-01A-01-BS1/06_error.png"
       },
-      "grid": "grids/grid_05_TCGA-AY-A8YK-01A-01-TS1.png"
+      "grid": "grids/grid_05_TCGA-A6-6782-01A-01-BS1.png"
     },
     {
       "n": 6,
-      "sample_id": "TCGA-NH-A8F7-01A-01-TS1",
+      "sample_id": "TCGA-HT-8564-01Z-00-DX1",
       "panels": {
-        "image": "panels/TCGA-NH-A8F7-01A-01-TS1/00_image.png",
-        "gt": "panels/TCGA-NH-A8F7-01A-01-TS1/01_gt.png",
-        "pred_a0": "panels/TCGA-NH-A8F7-01A-01-TS1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-NH-A8F7-01A-01-TS1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-NH-A8F7-01A-01-TS1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-NH-A8F7-01A-01-TS1/05_pred_final.png",
-        "error": "panels/TCGA-NH-A8F7-01A-01-TS1/06_error.png"
+        "image": "panels/TCGA-HT-8564-01Z-00-DX1/00_image.png",
+        "gt": "panels/TCGA-HT-8564-01Z-00-DX1/01_gt.png",
+        "pred_a0": "panels/TCGA-HT-8564-01Z-00-DX1/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-HT-8564-01Z-00-DX1/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-HT-8564-01Z-00-DX1/04_pred_a3.png",
+        "pred_final": "panels/TCGA-HT-8564-01Z-00-DX1/05_pred_final.png",
+        "error": "panels/TCGA-HT-8564-01Z-00-DX1/06_error.png"
       },
-      "grid": "grids/grid_06_TCGA-NH-A8F7-01A-01-TS1.png"
+      "grid": "grids/grid_06_TCGA-HT-8564-01Z-00-DX1.png"
     },
     {
       "n": 7,
-      "sample_id": "TCGA-G2-A2EK-01A-02-TSB",
+      "sample_id": "TCGA-IZ-8196-01A-01-BS1",
       "panels": {
-        "image": "panels/TCGA-G2-A2EK-01A-02-TSB/00_image.png",
-        "gt": "panels/TCGA-G2-A2EK-01A-02-TSB/01_gt.png",
-        "pred_a0": "panels/TCGA-G2-A2EK-01A-02-TSB/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-G2-A2EK-01A-02-TSB/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-G2-A2EK-01A-02-TSB/04_pred_a3.png",
-        "pred_final": "panels/TCGA-G2-A2EK-01A-02-TSB/05_pred_final.png",
-        "error": "panels/TCGA-G2-A2EK-01A-02-TSB/06_error.png"
+        "image": "panels/TCGA-IZ-8196-01A-01-BS1/00_image.png",
+        "gt": "panels/TCGA-IZ-8196-01A-01-BS1/01_gt.png",
+        "pred_a0": "panels/TCGA-IZ-8196-01A-01-BS1/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-IZ-8196-01A-01-BS1/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-IZ-8196-01A-01-BS1/04_pred_a3.png",
+        "pred_final": "panels/TCGA-IZ-8196-01A-01-BS1/05_pred_final.png",
+        "error": "panels/TCGA-IZ-8196-01A-01-BS1/06_error.png"
       },
-      "grid": "grids/grid_07_TCGA-G2-A2EK-01A-02-TSB.png"
+      "grid": "grids/grid_07_TCGA-IZ-8196-01A-01-BS1.png"
     },
     {
       "n": 8,
-      "sample_id": "TCGA-HE-7130-01Z-00-DX1",
+      "sample_id": "TCGA-AO-A0J2-01A-01-BSA",
       "panels": {
-        "image": "panels/TCGA-HE-7130-01Z-00-DX1/00_image.png",
-        "gt": "panels/TCGA-HE-7130-01Z-00-DX1/01_gt.png",
-        "pred_a0": "panels/TCGA-HE-7130-01Z-00-DX1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-HE-7130-01Z-00-DX1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-HE-7130-01Z-00-DX1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-HE-7130-01Z-00-DX1/05_pred_final.png",
-        "error": "panels/TCGA-HE-7130-01Z-00-DX1/06_error.png"
+        "image": "panels/TCGA-AO-A0J2-01A-01-BSA/00_image.png",
+        "gt": "panels/TCGA-AO-A0J2-01A-01-BSA/01_gt.png",
+        "pred_a0": "panels/TCGA-AO-A0J2-01A-01-BSA/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-AO-A0J2-01A-01-BSA/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-AO-A0J2-01A-01-BSA/04_pred_a3.png",
+        "pred_final": "panels/TCGA-AO-A0J2-01A-01-BSA/05_pred_final.png",
+        "error": "panels/TCGA-AO-A0J2-01A-01-BSA/06_error.png"
       },
-      "grid": "grids/grid_08_TCGA-HE-7130-01Z-00-DX1.png"
+      "grid": "grids/grid_08_TCGA-AO-A0J2-01A-01-BSA.png"
     },
     {
       "n": 9,
-      "sample_id": "TCGA-DK-A2I6-01A-01-TS1",
+      "sample_id": "TCGA-CU-A0YN-01A-02-BSB",
       "panels": {
-        "image": "panels/TCGA-DK-A2I6-01A-01-TS1/00_image.png",
-        "gt": "panels/TCGA-DK-A2I6-01A-01-TS1/01_gt.png",
-        "pred_a0": "panels/TCGA-DK-A2I6-01A-01-TS1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-DK-A2I6-01A-01-TS1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-DK-A2I6-01A-01-TS1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-DK-A2I6-01A-01-TS1/05_pred_final.png",
-        "error": "panels/TCGA-DK-A2I6-01A-01-TS1/06_error.png"
+        "image": "panels/TCGA-CU-A0YN-01A-02-BSB/00_image.png",
+        "gt": "panels/TCGA-CU-A0YN-01A-02-BSB/01_gt.png",
+        "pred_a0": "panels/TCGA-CU-A0YN-01A-02-BSB/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-CU-A0YN-01A-02-BSB/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-CU-A0YN-01A-02-BSB/04_pred_a3.png",
+        "pred_final": "panels/TCGA-CU-A0YN-01A-02-BSB/05_pred_final.png",
+        "error": "panels/TCGA-CU-A0YN-01A-02-BSB/06_error.png"
       },
-      "grid": "grids/grid_09_TCGA-DK-A2I6-01A-01-TS1.png"
+      "grid": "grids/grid_09_TCGA-CU-A0YN-01A-02-BSB.png"
     },
     {
       "n": 10,
-      "sample_id": "TCGA-A7-A13F-01Z-00-DX1",
+      "sample_id": "TCGA-AC-A2FO-01A-01-TS1",
       "panels": {
-        "image": "panels/TCGA-A7-A13F-01Z-00-DX1/00_image.png",
-        "gt": "panels/TCGA-A7-A13F-01Z-00-DX1/01_gt.png",
-        "pred_a0": "panels/TCGA-A7-A13F-01Z-00-DX1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-A7-A13F-01Z-00-DX1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-A7-A13F-01Z-00-DX1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-A7-A13F-01Z-00-DX1/05_pred_final.png",
-        "error": "panels/TCGA-A7-A13F-01Z-00-DX1/06_error.png"
+        "image": "panels/TCGA-AC-A2FO-01A-01-TS1/00_image.png",
+        "gt": "panels/TCGA-AC-A2FO-01A-01-TS1/01_gt.png",
+        "pred_a0": "panels/TCGA-AC-A2FO-01A-01-TS1/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-AC-A2FO-01A-01-TS1/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-AC-A2FO-01A-01-TS1/04_pred_a3.png",
+        "pred_final": "panels/TCGA-AC-A2FO-01A-01-TS1/05_pred_final.png",
+        "error": "panels/TCGA-AC-A2FO-01A-01-TS1/06_error.png"
       },
-      "grid": "grids/grid_10_TCGA-A7-A13F-01Z-00-DX1.png"
+      "grid": "grids/grid_10_TCGA-AC-A2FO-01A-01-TS1.png"
     },
     {
       "n": 11,
-      "sample_id": "TCGA-E2-A1B5-01Z-00-DX1",
+      "sample_id": "TCGA-EJ-A46H-01A-03-TSC",
       "panels": {
-        "image": "panels/TCGA-E2-A1B5-01Z-00-DX1/00_image.png",
-        "gt": "panels/TCGA-E2-A1B5-01Z-00-DX1/01_gt.png",
-        "pred_a0": "panels/TCGA-E2-A1B5-01Z-00-DX1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-E2-A1B5-01Z-00-DX1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-E2-A1B5-01Z-00-DX1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-E2-A1B5-01Z-00-DX1/05_pred_final.png",
-        "error": "panels/TCGA-E2-A1B5-01Z-00-DX1/06_error.png"
+        "image": "panels/TCGA-EJ-A46H-01A-03-TSC/00_image.png",
+        "gt": "panels/TCGA-EJ-A46H-01A-03-TSC/01_gt.png",
+        "pred_a0": "panels/TCGA-EJ-A46H-01A-03-TSC/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-EJ-A46H-01A-03-TSC/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-EJ-A46H-01A-03-TSC/04_pred_a3.png",
+        "pred_final": "panels/TCGA-EJ-A46H-01A-03-TSC/05_pred_final.png",
+        "error": "panels/TCGA-EJ-A46H-01A-03-TSC/06_error.png"
       },
-      "grid": "grids/grid_11_TCGA-E2-A1B5-01Z-00-DX1.png"
+      "grid": "grids/grid_11_TCGA-EJ-A46H-01A-03-TSC.png"
     },
     {
       "n": 12,
-      "sample_id": "TCGA-G9-6348-01Z-00-DX1",
+      "sample_id": "TCGA-HC-7209-01A-01-TS1",
       "panels": {
-        "image": "panels/TCGA-G9-6348-01Z-00-DX1/00_image.png",
-        "gt": "panels/TCGA-G9-6348-01Z-00-DX1/01_gt.png",
-        "pred_a0": "panels/TCGA-G9-6348-01Z-00-DX1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-G9-6348-01Z-00-DX1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-G9-6348-01Z-00-DX1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-G9-6348-01Z-00-DX1/05_pred_final.png",
-        "error": "panels/TCGA-G9-6348-01Z-00-DX1/06_error.png"
+        "image": "panels/TCGA-HC-7209-01A-01-TS1/00_image.png",
+        "gt": "panels/TCGA-HC-7209-01A-01-TS1/01_gt.png",
+        "pred_a0": "panels/TCGA-HC-7209-01A-01-TS1/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-HC-7209-01A-01-TS1/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-HC-7209-01A-01-TS1/04_pred_a3.png",
+        "pred_final": "panels/TCGA-HC-7209-01A-01-TS1/05_pred_final.png",
+        "error": "panels/TCGA-HC-7209-01A-01-TS1/06_error.png"
       },
-      "grid": "grids/grid_12_TCGA-G9-6348-01Z-00-DX1.png"
+      "grid": "grids/grid_12_TCGA-HC-7209-01A-01-TS1.png"
     },
     {
       "n": 13,
-      "sample_id": "TCGA-G9-6336-01Z-00-DX1",
+      "sample_id": "TCGA-GL-6846-01A-01-BS1",
       "panels": {
-        "image": "panels/TCGA-G9-6336-01Z-00-DX1/00_image.png",
-        "gt": "panels/TCGA-G9-6336-01Z-00-DX1/01_gt.png",
-        "pred_a0": "panels/TCGA-G9-6336-01Z-00-DX1/02_pred_a0.png",
-        "pred_a2": "panels/TCGA-G9-6336-01Z-00-DX1/03_pred_a2.png",
-        "pred_a3": "panels/TCGA-G9-6336-01Z-00-DX1/04_pred_a3.png",
-        "pred_final": "panels/TCGA-G9-6336-01Z-00-DX1/05_pred_final.png",
-        "error": "panels/TCGA-G9-6336-01Z-00-DX1/06_error.png"
+        "image": "panels/TCGA-GL-6846-01A-01-BS1/00_image.png",
+        "gt": "panels/TCGA-GL-6846-01A-01-BS1/01_gt.png",
+        "pred_a0": "panels/TCGA-GL-6846-01A-01-BS1/02_pred_a0.png",
+        "pred_a2": "panels/TCGA-GL-6846-01A-01-BS1/03_pred_a2.png",
+        "pred_a3": "panels/TCGA-GL-6846-01A-01-BS1/04_pred_a3.png",
+        "pred_final": "panels/TCGA-GL-6846-01A-01-BS1/05_pred_final.png",
+        "error": "panels/TCGA-GL-6846-01A-01-BS1/06_error.png"
       },
-      "grid": "grids/grid_13_TCGA-G9-6336-01Z-00-DX1.png"
+      "grid": "grids/grid_13_TCGA-GL-6846-01A-01-BS1.png"
     }
   ],
   "error_color_map": {
@@ -229,5 +229,5 @@
     ]
   },
   "renderer_version": "official_visuals.py::save_official_visuals",
-  "generated_at": "2026-05-25T14:49:17.006372+00:00"
+  "generated_at": "2026-05-25T18:15:48.504093+00:00"
 }
