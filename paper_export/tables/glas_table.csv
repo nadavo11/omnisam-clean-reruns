@@ -1,0 +1,5 @@
+ID,Method,Dice,IoU
+A0,$\text{fpn}_2$ only (anchor),0.9374,0.8847
+A2,$\text{fpn}_2$ + $\text{fpn}_1$ refine,\textbf{0.9405},\textbf{0.8897}
+A3,A2 + memory attention,0.9243,0.8635
+A5,A3 + $\text{fpn}_0$ residual,0.9259,0.8656

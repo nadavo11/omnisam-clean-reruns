@@ -1,0 +1,14 @@
+% Experimental protocol paragraph — paste into experiments section
+
+\paragraph{Protocol.}
+All models use a frozen SAM-3 (ViT-H) backbone; the prompt encoder and mask decoder are never
+called. Images are resized to a fixed resolution before feature extraction:
+$512{\times}512$ for MoNuSeg and $224{\times}224$ for GlaS (bilinear interpolation).
+MoNuSeg models are trained for 40 epochs (Stage~1) + 40 epochs (Stage~2, \textbf{Ours} only)
+with no data augmentation, AdamW ($\text{lr}=10^{-4}$, $\text{wd}=10^{-4}$), batch size~1.
+GlaS models are trained for 200 epochs with \texttt{autosam\_dense\_v1} augmentation
+(random affine $\pm 20°$, scale $[0.75,1.25]$, horizontal flip, colour jitter).
+All results are reported on the \emph{official MoNuSeg challenge training split}
+(30 WSI patches; threshold $\tau{=}0.5$) and the GlaS test set.
+Headline metrics are direct-foreground Dice and IoU; SAM upstream logits are never used as a
+headline score.

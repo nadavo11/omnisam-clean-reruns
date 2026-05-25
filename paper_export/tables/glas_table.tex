@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabular}{llll}
+  \toprule
+  \textbf{ID} & \textbf{Method} & \textbf{Dice} & \textbf{IoU} \\
+  \midrule
+  A0 & $\text{fpn}_2$ only (anchor) & 0.9374 & 0.8847 \\
+  A2 & $\text{fpn}_2$ + $\text{fpn}_1$ refine & \textbf{0.9405} & \textbf{0.8897} \\
+  A3 & A2 + memory attention & 0.9243 & 0.8635 \\
+  A5 & A3 + $\text{fpn}_0$ residual & 0.9259 & 0.8656 \\
+  \bottomrule
+  \end{tabular}
+  \caption{GlaS architecture ablation: direct foreground Dice/IoU. Fixed-resize 224\texttimes224, 200 epochs, autosam\_dense\_v1 augmentation.}
+  \label{tab:glas_ablation}
+\end{table}

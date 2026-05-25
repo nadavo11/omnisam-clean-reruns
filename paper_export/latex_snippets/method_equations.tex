@@ -1,0 +1,31 @@
+% Staged Multiscale Frozen-SAM3 Readout — method equations
+% Include in methods section with \input{latex_snippets/method_equations}
+
+% SAM feature pyramid (frozen backbone)
+\begin{equation}
+  \mathbf{F} = \mathrm{SAM\text{-}3}_{\text{frozen}}(\mathbf{x}),\quad
+  \mathbf{F} = \{\mathbf{f}_2, \mathbf{f}_1, \mathbf{f}_0\}
+  \label{eq:fpn}
+\end{equation}
+% f_2: coarsest (256ch, 72x72 at 512 input)
+% f_1: middle  (256ch, 144x144)
+% f_0: finest  (256ch, 288x288)
+
+% A3 readout (Stage 1)
+\begin{equation}
+  L_{\text{A3}} = \mathrm{Conv}(\mathbf{f}_2) + \mathrm{Refine}(\mathbf{f}_1,\, \mathrm{upsample}(\mathbf{f}_2))
+                 + \mathrm{MemAttn}_{M=8}(\mathbf{f}_1)
+  \label{eq:a3}
+\end{equation}
+
+% F0 residual (Stage 2)
+\begin{equation}
+  \alpha = \sigma(\alpha_{\mathrm{raw}}),\quad \alpha_{\mathrm{raw}} = \log\!\tfrac{0.05}{0.95}
+  \label{eq:alpha_init}
+\end{equation}
+
+\begin{equation}
+  L_{\text{final}} = L_{\text{A3}} + \alpha \cdot R_0(\mathbf{f}_0)
+  \label{eq:final}
+\end{equation}
+% R_0 final layer zero-initialised; alpha anneals from ~0.05 during Stage 2 (+40 epochs)

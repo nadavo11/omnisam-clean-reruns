@@ -1,0 +1,36 @@
+dataset:
+  name: monuseg
+  root_or_name: RationAI/MoNuSeg
+  split: train  # official MoNuSeg challenge training set (30 WSI patches) — used as eval benchmark
+  resize_before_sam:
+    height: 512
+    width: 512
+  augmentation_policy: none  # MoNuSeg official runs used no augmentation
+
+sam:
+  model_id: sam-vit-h
+  frozen: true
+  use_prompt_encoder: false
+  use_mask_decoder: false
+  feature_levels: [fpn_2, fpn_1, fpn_0]
+
+training:
+  epochs_stage1: 40
+  epochs_stage2: 40
+  optimizer: AdamW
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  batch_size: 1
+  train_joint_readout: true
+
+evaluation:
+  official: true
+  metrics:
+    - direct_foreground_dice
+    - direct_foreground_iou
+  threshold: 0.5
+
+guards:
+  fail_if_sam_trainable: true
+  fail_if_prompt_encoder_used: true
+  fail_if_mask_decoder_used: true

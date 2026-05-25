@@ -1,0 +1,15 @@
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabular}{llll}
+  \toprule
+  \textbf{Config} & \textbf{Description} & \textbf{Dice} & \textbf{IoU} \\
+  \midrule
+  Stage 1 only & A3 without $\text{fpn}_0$ & 0.8346 & 0.7171 \\
+  Stage 1+2 & Joint staged readout (official method) & 0.8539 & 0.7459 \\
+  Freeze-A3 & Stage 2 freezes A3 (ablation) & 0.8234 & 0.7010 \\
+  \bottomrule
+  \end{tabular}
+  \caption{Staged training ablation on MoNuSeg. Joint readout outperforms both single-stage and frozen-A3 variants.}
+  \label{tab:staging}
+\end{table}

@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabular}{llll}
+  \toprule
+  \textbf{ID} & \textbf{Method} & \textbf{Dice} & \textbf{IoU} \\
+  \midrule
+  A0 & $\text{fpn}_2$ only (anchor) & 0.8103 & 0.6835 \\
+  A2 & $\text{fpn}_2$ + $\text{fpn}_1$ refine & 0.8423 & 0.7284 \\
+  A3 & A2 + memory attention ($M{=}8$) & 0.8346 & 0.7171 \\
+  A5 once & A3 + $\text{fpn}_0$ residual (all-at-once) & 0.8392 & 0.7239 \\
+  \textbf{Ours} & \textbf{Staged} A3 $\to$ $\text{fpn}_0$ (+40 ep) & \textbf{0.8539} & \textbf{0.7459} \\
+  \bottomrule
+  \end{tabular}
+  \caption{MoNuSeg ablation: direct foreground Dice/IoU (higher is better). Fixed-resize 512\texttimes512, 40 epochs, seed 0.}
+  \label{tab:main_ablation}
+\end{table}

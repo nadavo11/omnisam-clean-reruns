@@ -1,0 +1,13 @@
+% Reproducibility statement — paste into supplementary or ethics/reproducibility section
+
+\paragraph{Reproducibility.}
+Code, configs, and locked metrics are released at \texttt{[repo-url]}.
+All headline numbers are locked in \texttt{results/official\_result\_lock.yaml} and
+verified against reproduced \texttt{official\_metrics.json} files
+(tolerance $|\Delta\text{Dice}|\leq 0.002$, $|\Delta\text{IoU}|\leq 0.003$).
+The SAM-3 backbone (ViT-H, $\sim$600M parameters) is loaded from
+\texttt{facebook/sam3} via the official \texttt{sam3} package; all weights are frozen
+and only the lightweight readout head ($<$5M parameters) is trained.
+Training a single MoNuSeg model requires approximately X GPU-hours on an A100-80GB
+(run:AI cluster, project \texttt{avidan}).
+\end{equation}

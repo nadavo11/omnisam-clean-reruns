@@ -1,0 +1,4 @@
+Config,Description,Dice,IoU
+Stage 1 only,A3 without $\text{fpn}_0$,0.8346,0.7171
+Stage 1+2,Joint staged readout (official method),0.8539,0.7459
+Freeze-A3,Stage 2 freezes A3 (ablation),0.8234,0.7010

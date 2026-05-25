@@ -1,0 +1,11 @@
+Dataset,ID,Description,Dice,IoU
+MONUSEG,MoNuSeg A0,MoNuSeg anchor,0.8103,0.6835
+MONUSEG,MoNuSeg A2,MoNuSeg + $\text{fpn}_1$,0.8423,0.7284
+MONUSEG,MoNuSeg A3,MoNuSeg + memory attn,0.8346,0.7171
+MONUSEG,MoNuSeg A5,MoNuSeg A5 once,0.8392,0.7239
+MONUSEG,MoNuSeg (ours),MoNuSeg staged (ours),0.8539,0.7459
+MONUSEG,Freeze-A3,MoNuSeg freeze-A3 control,0.8234,0.7010
+GLAS,GlaS A0,GlaS anchor,0.9374,0.8847
+GLAS,GlaS A2,GlaS + $\text{fpn}_1$,0.9405,0.8897
+GLAS,GlaS A3,GlaS + memory attn,0.9243,0.8635
+GLAS,GlaS A5,GlaS A5 once,0.9259,0.8656

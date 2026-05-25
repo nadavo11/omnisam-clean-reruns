@@ -1,0 +1,11 @@
+% Limitations paragraph
+
+\paragraph{Limitations.}
+Our method relies on a frozen SAM-3 ViT-H backbone, making inference memory-intensive
+($\sim$10~GB GPU at $512{\times}512$). The staged training requires two sequential phases,
+adding wall-clock time relative to all-at-once training.
+Evaluation is single-seed (seed~0); multi-seed variance has not been characterised.
+The $\text{fpn}_0$ residual alpha is initialised small ($\sigma(\alpha)\approx 0.05$)
+to prevent early collapse, but the optimal schedule may be dataset-dependent.
+GlaS results use $224{\times}224$ fixed resize, which may lose fine-grained gland boundary
+information; adaptive-resolution extensions are left for future work.

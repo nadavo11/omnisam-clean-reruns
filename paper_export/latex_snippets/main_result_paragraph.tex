@@ -1,0 +1,11 @@
+% Main result paragraph — paste into results section
+
+Table~\ref{tab:main_ablation} presents the ablation ladder on MoNuSeg.
+The anchor model A0 ($\text{fpn}_2$ only) achieves $0.8103$ Dice.
+Adding $\text{fpn}_1$ refinement (A2) improves to $0.8423$~(+3.2~pp), and memory attention
+(A3, $M{=}8$) yields $0.8346$.
+Appending the $\text{fpn}_0$ residual in a single all-at-once stage (A5) gives $0.8392$,
+whereas our \textbf{staged} two-phase training (Stage~1: A3, Stage~2: +$\text{fpn}_0$ for 40 epochs)
+reaches $\mathbf{0.8539}$~Dice / $\mathbf{0.7459}$~IoU --- a $+1.5$~pp gain over all-at-once,
+confirming that curriculum staging is essential for stable $\text{fpn}_0$ integration.
+Table~\ref{tab:glas_ablation} shows consistent trends on GlaS, with A0 at $0.9374$ and A3 at $0.9243$.

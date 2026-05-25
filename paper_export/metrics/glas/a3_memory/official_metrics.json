@@ -1,0 +1,23 @@
+{
+  "dataset": "glas",
+  "protocol": "glas_fixed_224",
+  "variant": "a3_memory",
+  "checkpoint": "/tmp/cluster_checkpoints/glas_A3_m8_fpn2fpn1memoryattn_224_autosamaug_e200/checkpoint.pt",
+  "seed": 0,
+  "headline_metrics": {
+    "direct_foreground_dice": 0.9242769282966787,
+    "direct_foreground_iou": 0.8635070907811319
+  },
+  "auxiliary_metrics": {
+    "upstream_eval_dice": null,
+    "upstream_eval_iou": null
+  },
+  "threshold": 0.5,
+  "metric_source": "metrics/foreground.py::compute_binary_metrics",
+  "prediction_resolution": "resize_to_224x224:image=bilinear,mask=nearest,before_feature_extraction_and_eval",
+  "gt_resolution": "native",
+  "paper_headline_safe": true,
+  "eval_split": "train",
+  "source_summary_json": "/tmp/cluster_checkpoints/glas_A3_m8_fpn2fpn1memoryattn_224_autosamaug_e200/summary.json",
+  "generated_at": "2026-05-25T11:19:52.471972+00:00"
+}

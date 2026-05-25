@@ -1,0 +1,9 @@
+run:AI cluster: project=avidan
+Storage: /storage/nada/
+
+Jobs used for official metric extraction (2026-05-25):
+- mystorage (persistent pod): cat of summary.json files for all 10 checkpoint dirs
+- ckpt-probe-9591552: inspect source checkpoint state_dict keys (pending output)
+
+Source checkpoint root: /storage/nada/outputs/fixed_resize_enhancement/
+Environment: /storage/nada/envs/texture-representations-runai-cu128/

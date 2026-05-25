@@ -1,0 +1,10 @@
+visualization:
+  columns: [Input, GT, A0, A2, A3, Final, Error]
+  variant_order:
+    - a0_fpn2
+    - a2_fpn2_fpn1_refine
+    - a3_memory
+    - final_staged
+  threshold: 0.5
+  pad: 4
+  title_height: 18

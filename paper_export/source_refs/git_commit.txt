@@ -1,0 +1,12 @@
+Repository: omniSAM (staged multiscale frozen-SAM3 readout)
+HEAD commit: 9591552ff3c698b2b11156ede741c04a1b9bd030
+Branch: master
+Date: 2026-05-25
+
+Commit history:
+9591552 Visualizer: text-free panels, LaTeX hierarchy, QC grids, wandb streaming
+4bc74d8 Close paper-readiness blockers: extractor fix, augmentation port, per-sample CSV, validation reports
+43d973e Initial migration: staged multiscale frozen-SAM3 readout
+
+Source repo (private): /home/nada/PycharmProjects/texture representations
+Source repo HEAD (at migration): see git log in source repo

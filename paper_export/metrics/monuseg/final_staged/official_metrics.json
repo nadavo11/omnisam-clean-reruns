@@ -1,0 +1,23 @@
+{
+  "dataset": "monuseg",
+  "protocol": "monuseg_strict_512",
+  "variant": "final_staged",
+  "checkpoint": "/tmp/cluster_checkpoints/monuseg_A5lrn_staged_from_A3s0_e40/checkpoint.pt",
+  "seed": 0,
+  "headline_metrics": {
+    "direct_foreground_dice": 0.8538833584155965,
+    "direct_foreground_iou": 0.7458720140172262
+  },
+  "auxiliary_metrics": {
+    "upstream_eval_dice": 0.8538833584155965,
+    "upstream_eval_iou": 0.7458720140172262
+  },
+  "threshold": 0.5,
+  "metric_source": "metrics/foreground.py::compute_binary_metrics",
+  "prediction_resolution": "resize_to_512x512:image=bilinear,mask=nearest,before_feature_extraction_and_eval",
+  "gt_resolution": "native",
+  "paper_headline_safe": true,
+  "eval_split": "train",
+  "source_summary_json": "/tmp/cluster_checkpoints/monuseg_A5lrn_staged_from_A3s0_e40/summary.json",
+  "generated_at": "2026-05-25T11:19:52.471324+00:00"
+}

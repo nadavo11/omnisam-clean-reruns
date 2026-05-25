@@ -1,0 +1,6 @@
+ID,Method,Dice,IoU
+A0,$\text{fpn}_2$ only (anchor),0.8103,0.6835
+A2,$\text{fpn}_2$ + $\text{fpn}_1$ refine,0.8423,0.7284
+A3,A2 + memory attention ($M{=}8$),0.8346,0.7171
+A5 once,A3 + $\text{fpn}_0$ residual (all-at-once),0.8392,0.7239
+\textbf{Ours},\textbf{Staged} A3 $\to$ $\text{fpn}_0$ (+40 ep),\textbf{0.8539},\textbf{0.7459}
