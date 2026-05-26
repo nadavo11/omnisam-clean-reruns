@@ -258,11 +258,21 @@ def main(argv: list[str] | None = None) -> int:
     if is_two_stage:
         head.set_f0_enabled(False)  # stage 1: inner head only
 
+    lr_schedule = str(training_cfg.get("lr_schedule", "constant")).lower()
+    lr_min = float(training_cfg.get("lr_min", 0.0))
+
     optimizer = torch.optim.AdamW(
         [p for p in head.parameters() if p.requires_grad],
         lr=float(training_cfg.get("lr", 1e-4)),
         weight_decay=float(training_cfg.get("weight_decay", 1e-4)),
     )
+
+    def _make_scheduler(opt: torch.optim.Optimizer, n_epochs: int) -> "torch.optim.lr_scheduler._LRScheduler | None":
+        if lr_schedule == "cosine":
+            return torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=n_epochs, eta_min=lr_min)
+        return None
+
+    scheduler = _make_scheduler(optimizer, stage1_epochs if is_two_stage else total_epochs)
     threshold = float(config.get("evaluation", {}).get("threshold", 0.5))
 
     # Fixed test visual sample (first test sample, consistent across epochs)
@@ -331,6 +341,9 @@ def main(argv: list[str] | None = None) -> int:
     # -----------------------------------------------------------------------
     best_test_dice = float("-inf")
     best_test_iou = float("-inf")
+    best_test_epoch = -1
+    final_epoch_dice = float("nan")
+    final_epoch_iou = float("nan")
     best_ckpt = out_dir / "checkpoint.pt"
     latest_ckpt = out_dir / "checkpoint_last.pt"
 
@@ -345,6 +358,7 @@ def main(argv: list[str] | None = None) -> int:
                 lr=float(training_cfg.get("lr", 1e-4)),
                 weight_decay=float(training_cfg.get("weight_decay", 1e-4)),
             )
+            scheduler = _make_scheduler(optimizer, stage2_epochs)
 
         train_stream = _streaming_feature_iter(extractor, train_samples, resize_hw)
         train_stats = train_one_epoch(
@@ -365,7 +379,12 @@ def main(argv: list[str] | None = None) -> int:
         if test_dice > best_test_dice:
             best_test_dice = test_dice
             best_test_iou = test_iou
+            best_test_epoch = epoch
             save_checkpoint(best_ckpt, model=head, optimizer=optimizer, epoch=epoch)
+        final_epoch_dice = test_dice
+        final_epoch_iou = test_iou
+        if scheduler is not None:
+            scheduler.step()
 
         # Fixed visual for this epoch
         pred = _predict_sample(
@@ -430,13 +449,35 @@ def main(argv: list[str] | None = None) -> int:
         "total_epochs": total_epochs,
         "stage1_epochs": stage1_epochs,
         "stage2_epochs": stage2_epochs,
-        "checkpoint_path": str(best_ckpt.resolve()),
-        "checkpoint_sha256": best_sha,
-        "config_path": str(Path(args.config).resolve()),
-        "split_manifest_path": str((out_dir / "split_manifest.json").resolve()),
+        "lr_schedule": lr_schedule,
+        "lr_min": lr_min,
+        "checkpoint_views": {
+            "final_epoch": {
+                "selected_by": "final_epoch",
+                "selected_epoch": total_epochs,
+                "claimability": "claimable_test_screen",
+                "test_dice": final_epoch_dice,
+                "test_iou": final_epoch_iou,
+            },
+            "best_test_epoch": {
+                "selected_by": "test_peak",
+                "selected_epoch": best_test_epoch,
+                "claimability": "diagnostic_oracle",
+                "test_dice": best_test_dice,
+                "test_iou": best_test_iou,
+                "checkpoint_path": str(best_ckpt.resolve()),
+                "checkpoint_sha256": best_sha,
+            },
+        },
+        # Legacy flat fields — keep for backward compatibility
         "test_dice": best_test_dice,
         "test_iou": best_test_iou,
         "selected_by": "best_test_dice",
+        "final_epoch_dice": final_epoch_dice,
+        "final_epoch_iou": final_epoch_iou,
+        "best_test_epoch": best_test_epoch,
+        "config_path": str(Path(args.config).resolve()),
+        "split_manifest_path": str((out_dir / "split_manifest.json").resolve()),
         "train_count": len(train_samples),
         "test_count": len(test_samples),
         "backbone_backend": backbone_backend,
@@ -468,7 +509,12 @@ def main(argv: list[str] | None = None) -> int:
 
     print(
         f"[{args.run_name}] final best test_dice={best_test_dice:.4f} test_iou={best_test_iou:.4f} "
-        f"(selected_by=best_test_dice)",
+        f"(selected_by=best_test_dice, best_epoch={best_test_epoch})",
+        flush=True,
+    )
+    print(
+        f"[{args.run_name}] final_epoch test_dice={final_epoch_dice:.4f} test_iou={final_epoch_iou:.4f} "
+        f"(selected_by=final_epoch, epoch={total_epochs}, claimability=claimable_test_screen)",
         flush=True,
     )
     print(f"Saved test metrics: {out_dir / 'eval' / 'test_metrics.json'}")

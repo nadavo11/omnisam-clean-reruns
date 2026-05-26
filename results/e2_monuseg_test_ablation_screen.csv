@@ -1,0 +1,46 @@
+run,variant,seed,total_epochs,stage1_epochs,stage2_epochs,stage_transition_epoch,lr_schedule,selected_by,selected_epoch,claimability,dice,iou,batch,runai_status,notes
+legacy-clean-e1-a0-s0,A0,0,40,40,0,,constant,val_selected,unknown,non_claimable_val_selected,0.7390,0.5869,legacy,legacy,checkpoint selected by val Dice (epoch unknown); forbidden under MoNuSeg no-val contract; test dice reported on official test split
+legacy-clean-e1-a0-s1,A0,1,40,40,0,,constant,val_selected,unknown,non_claimable_val_selected,0.7381,0.5858,legacy,legacy,checkpoint selected by val Dice (epoch unknown); forbidden under MoNuSeg no-val contract; test dice reported on official test split
+legacy-clean-e1-a0-s2,A0,2,40,40,0,,constant,val_selected,unknown,non_claimable_val_selected,0.7401,0.5883,legacy,legacy,checkpoint selected by val Dice (epoch unknown); forbidden under MoNuSeg no-val contract; test dice reported on official test split
+legacy-clean-e1-a2-s0,A2,0,40,40,0,,constant,val_selected,unknown,non_claimable_val_selected,0.7999,0.6674,legacy,legacy,checkpoint selected by val Dice (epoch unknown); forbidden under MoNuSeg no-val contract; test dice reported on official test split
+legacy-clean-e1-a2-s1,A2,1,40,40,0,,constant,val_selected,unknown,non_claimable_val_selected,0.7984,0.6654,legacy,legacy,checkpoint selected by val Dice (epoch unknown); forbidden under MoNuSeg no-val contract; test dice reported on official test split
+legacy-clean-e1-a2-s2,A2,2,40,40,0,,constant,val_selected,unknown,non_claimable_val_selected,0.7996,0.6669,legacy,legacy,checkpoint selected by val Dice (epoch unknown); forbidden under MoNuSeg no-val contract; test dice reported on official test split
+legacy-clean-e1-a3-s0,A3,0,40,40,0,,constant,val_selected,unknown,non_claimable_val_selected,0.8011,0.6691,legacy,legacy,checkpoint selected by val Dice (epoch unknown); forbidden under MoNuSeg no-val contract; test dice reported on official test split
+legacy-clean-e1-a3-s1,A3,1,40,40,0,,constant,val_selected,unknown,non_claimable_val_selected,0.8055,0.6752,legacy,legacy,checkpoint selected by val Dice (epoch unknown); forbidden under MoNuSeg no-val contract; test dice reported on official test split
+legacy-clean-e1-a3-s2,A3,2,40,40,0,,constant,val_selected,unknown,non_claimable_val_selected,0.8043,0.6735,legacy,legacy,checkpoint selected by val Dice (epoch unknown); forbidden under MoNuSeg no-val contract; test dice reported on official test split
+monuseg-testscreen-a3m4-s0,A3M4,0,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.7959,0.6619,batch1,Succeeded,wandb offline; W&B project name bug; log-only artifacts
+monuseg-testscreen-a3m4-s1,A3M4,1,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.7884,0.6518,batch1,Succeeded,wandb offline; W&B project name bug; log-only artifacts
+monuseg-testscreen-a3m4-s2,A3M4,2,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.7951,0.6608,batch1,Succeeded,wandb offline; W&B project name bug; log-only artifacts
+monuseg-testscreen-a3m8-s0,A3M8,0,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.7903,0.6542,batch1,Succeeded,wandb offline; W&B project name bug; log-only artifacts
+monuseg-testscreen-a3m8-s1,A3M8,1,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.8011,0.6691,batch1,Succeeded,wandb offline; W&B project name bug; log-only artifacts
+monuseg-testscreen-a3m8-s2,A3M8,2,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.7889,0.6523,batch1,Succeeded,wandb offline; W&B project name bug; log-only artifacts
+monuseg-testscreen-a5staged-from-a3-s0,A5staged,0,80,40,40,41,constant,final_epoch,80,claimable_test_screen,0.8051,0.6747,batch1,Error(pod_cleanup),Error=pod cleanup artifact; training completed all 80 epochs normally
+monuseg-testscreen-a5staged-from-a3-s1,A5staged,1,80,40,40,41,constant,final_epoch,80,claimable_test_screen,0.8057,0.6754,batch1,Succeeded,wandb offline; W&B project name bug
+monuseg-testscreen-a5staged-from-a3-s2,A5staged,2,80,40,40,41,constant,final_epoch,80,claimable_test_screen,0.7982,0.6652,batch1,Succeeded,wandb offline; W&B project name bug
+monuseg-testscreen-a5staged-no-memory-s0,A5noMem,0,80,40,40,41,constant,final_epoch,80,claimable_test_screen,0.8116,0.6838,batch1,Error(pod_cleanup),Error=pod cleanup artifact; training completed all 80 epochs normally
+monuseg-testscreen-a5staged-no-memory-s1,A5noMem,1,80,40,40,41,constant,final_epoch,80,claimable_test_screen,0.8075,0.6782,batch1,Error(pod_cleanup),Error=pod cleanup artifact; training completed all 80 epochs normally
+monuseg-testscreen-a5staged-no-memory-s2,A5noMem,2,80,40,40,41,constant,final_epoch,80,claimable_test_screen,0.8059,0.6761,batch1,Succeeded,wandb offline; W&B project name bug
+monuseg-testscreen-a3m4-s0,A3M4,0,40,40,0,,constant,test_peak,20,diagnostic_oracle,0.8086,0.6794,batch1,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m4-s1,A3M4,1,40,40,0,,constant,test_peak,19,diagnostic_oracle,0.8095,0.6807,batch1,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m4-s2,A3M4,2,40,40,0,,constant,test_peak,21,diagnostic_oracle,0.8111,0.6830,batch1,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m8-s0,A3M8,0,40,40,0,,constant,test_peak,17,diagnostic_oracle,0.8066,0.6766,batch1,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m8-s1,A3M8,1,40,40,0,,constant,test_peak,19,diagnostic_oracle,0.8095,0.6807,batch1,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m8-s2,A3M8,2,40,40,0,,constant,test_peak,18,diagnostic_oracle,0.8088,0.6798,batch1,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a5staged-from-a3-s0,A5staged,0,80,40,40,41,constant,test_peak,63,diagnostic_oracle,0.8177,0.6924,batch1,Error(pod_cleanup),oracle upper bound; not claimable
+monuseg-testscreen-a5staged-from-a3-s1,A5staged,1,80,40,40,41,constant,test_peak,72,diagnostic_oracle,0.8181,0.6930,batch1,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a5staged-from-a3-s2,A5staged,2,80,40,40,41,constant,test_peak,79,diagnostic_oracle,0.8121,0.6845,batch1,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a5staged-no-memory-s0,A5noMem,0,80,40,40,41,constant,test_peak,53,diagnostic_oracle,0.8160,0.6901,batch1,Error(pod_cleanup),oracle upper bound; not claimable
+monuseg-testscreen-a5staged-no-memory-s1,A5noMem,1,80,40,40,41,constant,test_peak,43,diagnostic_oracle,0.8131,0.6861,batch1,Error(pod_cleanup),oracle upper bound; not claimable; best at ep3 of stage2 — very early
+monuseg-testscreen-a5staged-no-memory-s2,A5noMem,2,80,40,40,41,constant,test_peak,53,diagnostic_oracle,0.8155,0.6893,batch1,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m4-s0,A3M4,0,40,40,0,,constant,fixed_epoch,20,posthoc_fixed_epoch,0.8086,0.6794,batch1,Succeeded,post-hoc epoch 20; chosen after observing peak distribution
+monuseg-testscreen-a3m4-s1,A3M4,1,40,40,0,,constant,fixed_epoch,20,posthoc_fixed_epoch,0.8094,0.6806,batch1,Succeeded,post-hoc epoch 20; chosen after observing peak distribution
+monuseg-testscreen-a3m4-s2,A3M4,2,40,40,0,,constant,fixed_epoch,20,posthoc_fixed_epoch,0.8110,0.6828,batch1,Succeeded,post-hoc epoch 20; chosen after observing peak distribution
+monuseg-testscreen-a3m8-s0,A3M8,0,40,40,0,,constant,fixed_epoch,20,posthoc_fixed_epoch,0.8045,0.6736,batch1,Succeeded,post-hoc epoch 20; chosen after observing peak distribution
+monuseg-testscreen-a3m8-s1,A3M8,1,40,40,0,,constant,fixed_epoch,20,posthoc_fixed_epoch,0.8094,0.6805,batch1,Succeeded,post-hoc epoch 20; chosen after observing peak distribution
+monuseg-testscreen-a3m8-s2,A3M8,2,40,40,0,,constant,fixed_epoch,20,posthoc_fixed_epoch,0.8083,0.6790,batch1,Succeeded,post-hoc epoch 20; chosen after observing peak distribution
+monuseg-testscreen-a5staged-from-a3-s0,A5staged,0,80,40,40,41,constant,fixed_epoch,NOT_EXTRACTED,gap_not_available,,batch1,Error(pod_cleanup),no consensus fixed epoch for A5staged; best_epoch range ep63-79 across seeds; would require per-epoch log grep
+monuseg-testscreen-a5staged-from-a3-s1,A5staged,1,80,40,40,41,constant,fixed_epoch,NOT_EXTRACTED,gap_not_available,,batch1,Succeeded,no consensus fixed epoch for A5staged; best_epoch range ep63-79 across seeds; would require per-epoch log grep
+monuseg-testscreen-a5staged-from-a3-s2,A5staged,2,80,40,40,41,constant,fixed_epoch,NOT_EXTRACTED,gap_not_available,,batch1,Succeeded,no consensus fixed epoch for A5staged; best_epoch range ep63-79 across seeds; would require per-epoch log grep
+monuseg-testscreen-a5staged-no-memory-s0,A5noMem,0,80,40,40,41,constant,fixed_epoch,NOT_EXTRACTED,gap_not_available,,batch1,Error(pod_cleanup),no consensus fixed epoch for A5noMem; best_epoch range ep43-53 across seeds; would require per-epoch log grep
+monuseg-testscreen-a5staged-no-memory-s1,A5noMem,1,80,40,40,41,constant,fixed_epoch,NOT_EXTRACTED,gap_not_available,,batch1,Error(pod_cleanup),no consensus fixed epoch for A5noMem; best_epoch range ep43-53 across seeds; would require per-epoch log grep
+monuseg-testscreen-a5staged-no-memory-s2,A5noMem,2,80,40,40,41,constant,fixed_epoch,NOT_EXTRACTED,gap_not_available,,batch1,Succeeded,no consensus fixed epoch for A5noMem; best_epoch range ep43-53 across seeds; would require per-epoch log grep

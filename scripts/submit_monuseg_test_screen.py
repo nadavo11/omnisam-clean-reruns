@@ -24,10 +24,22 @@ PROJECT = "avidan"
 REPO_GIT = "https://github.com/nadavo11/omnisam-clean-launcher.git"
 
 VARIANTS = {
+    # Batch 1 — completed 2026-05-26
     "A3M4": "configs/test_screen/monuseg_a3_m4.yaml",
     "A3M8": "configs/test_screen/monuseg_a3_m8.yaml",
     "A5staged": "configs/test_screen/monuseg_a5_staged_from_a3.yaml",
     "A5noMem": "configs/test_screen/monuseg_a5_staged_no_memory.yaml",
+    # Batch 2 — Priority A: fixed short schedule controls
+    "A2short20": "configs/test_screen/monuseg_a2_short20.yaml",
+    "A3M4short20": "configs/test_screen/monuseg_a3m4_short20.yaml",
+    "A3M8short20": "configs/test_screen/monuseg_a3m8_short20.yaml",
+    # Batch 2 — Priority B: cosine schedule controls
+    "A2cos40": "configs/test_screen/monuseg_a2_cosine40.yaml",
+    "A3M4cos40": "configs/test_screen/monuseg_a3m4_cosine40.yaml",
+    "A3M8cos40": "configs/test_screen/monuseg_a3m8_cosine40.yaml",
+    # Batch 2 — Priority C: corrected staged schedule (stage1=20)
+    "A5stage20fromA3M4": "configs/test_screen/monuseg_a5_staged20_from_a3m4.yaml",
+    "A5stage20noMem": "configs/test_screen/monuseg_a5_staged20_no_memory.yaml",
 }
 
 VARIANT_NAMES = {
@@ -35,11 +47,19 @@ VARIANT_NAMES = {
     "A3M8": "monuseg-testscreen-a3m8",
     "A5staged": "monuseg-testscreen-a5staged-from-a3",
     "A5noMem": "monuseg-testscreen-a5staged-no-memory",
+    "A2short20": "monuseg-testscreen-a2-short20",
+    "A3M4short20": "monuseg-testscreen-a3m4-short20",
+    "A3M8short20": "monuseg-testscreen-a3m8-short20",
+    "A2cos40": "monuseg-testscreen-a2-cos40",
+    "A3M4cos40": "monuseg-testscreen-a3m4-cos40",
+    "A3M8cos40": "monuseg-testscreen-a3m8-cos40",
+    "A5stage20fromA3M4": "monuseg-testscreen-a5stage20-a3m4",
+    "A5stage20noMem": "monuseg-testscreen-a5stage20-nomem",
 }
 
 
 def pvc_target(variant_key: str, seed: int) -> str:
-    return f"/storage/nada/test_screen/{variant_key}/s{seed}"
+    return f"/storage/nada/test_screen/{variant_key.lower()}/s{seed}"
 
 
 def submit_job(
@@ -106,7 +126,7 @@ def submit_job(
         "--environment",
         "WANDB_MODE=online",
         "--environment",
-        f"WANDB_PROJECT=nadavoteam/frozen-sam-readout",
+        "WANDB_PROJECT=frozen-sam-readout",
     ]
     for env_name in ("HF_TOKEN", "HUGGINGFACE_HUB_TOKEN", "WANDB_API_KEY"):
         env_value = os.environ.get(env_name)
@@ -131,8 +151,8 @@ def main() -> int:
     parser.add_argument("--seeds", default="0,1,2", help="Comma-separated seeds")
     parser.add_argument(
         "--variants",
-        default="A3M4,A3M8,A5staged,A5noMem",
-        help="Comma-separated variant keys",
+        default="A3M4short20,A3M4cos40,A5stage20fromA3M4,A5stage20noMem",
+        help="Comma-separated variant keys (default: minimum next batch)",
     )
     args = parser.parse_args()
 

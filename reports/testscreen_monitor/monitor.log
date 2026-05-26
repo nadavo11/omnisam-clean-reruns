@@ -1,0 +1,455 @@
+[2026-05-26T21:06:04+03:00] STATUS:
+  Unknown monuseg-testscreen-a3m4-s0
+  Unknown monuseg-testscreen-a3m4-s1
+  Unknown monuseg-testscreen-a3m4-s2
+  Unknown monuseg-testscreen-a3m8-s0
+  Unknown monuseg-testscreen-a3m8-s1
+  Unknown monuseg-testscreen-a3m8-s2
+  Unknown monuseg-testscreen-a5staged-from-a3-s0
+  Unknown monuseg-testscreen-a5staged-from-a3-s1
+  Unknown monuseg-testscreen-a5staged-from-a3-s2
+  Unknown monuseg-testscreen-a5staged-no-memory-s0
+  Unknown monuseg-testscreen-a5staged-no-memory-s1
+  Unknown monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:08:37+03:00] STATUS:
+  Unknown monuseg-testscreen-a3m4-s0
+  Unknown monuseg-testscreen-a3m4-s1
+  Unknown monuseg-testscreen-a3m4-s2
+  Unknown monuseg-testscreen-a3m8-s0
+  Unknown monuseg-testscreen-a3m8-s1
+  Unknown monuseg-testscreen-a3m8-s2
+  Unknown monuseg-testscreen-a5staged-from-a3-s0
+  Unknown monuseg-testscreen-a5staged-from-a3-s1
+  Unknown monuseg-testscreen-a5staged-from-a3-s2
+  Unknown monuseg-testscreen-a5staged-no-memory-s0
+  Unknown monuseg-testscreen-a5staged-no-memory-s1
+  Unknown monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:11:07+03:00] STATUS:
+  Unknown monuseg-testscreen-a3m4-s0
+  Unknown monuseg-testscreen-a3m4-s1
+  Unknown monuseg-testscreen-a3m4-s2
+  Unknown monuseg-testscreen-a3m8-s0
+  Unknown monuseg-testscreen-a3m8-s1
+  Unknown monuseg-testscreen-a3m8-s2
+  Unknown monuseg-testscreen-a5staged-from-a3-s0
+  Unknown monuseg-testscreen-a5staged-from-a3-s1
+  Unknown monuseg-testscreen-a5staged-from-a3-s2
+  Unknown monuseg-testscreen-a5staged-no-memory-s0
+  Unknown monuseg-testscreen-a5staged-no-memory-s1
+  Unknown monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:13:37+03:00] STATUS:
+  Unknown monuseg-testscreen-a3m4-s0
+  Unknown monuseg-testscreen-a3m4-s1
+  Unknown monuseg-testscreen-a3m4-s2
+  Unknown monuseg-testscreen-a3m8-s0
+  Unknown monuseg-testscreen-a3m8-s1
+  Unknown monuseg-testscreen-a3m8-s2
+  Unknown monuseg-testscreen-a5staged-from-a3-s0
+  Unknown monuseg-testscreen-a5staged-from-a3-s1
+  Unknown monuseg-testscreen-a5staged-from-a3-s2
+  Unknown monuseg-testscreen-a5staged-no-memory-s0
+  Unknown monuseg-testscreen-a5staged-no-memory-s1
+  Unknown monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:16:07+03:00] STATUS:
+  Unknown monuseg-testscreen-a3m4-s0
+  Unknown monuseg-testscreen-a3m4-s1
+  Unknown monuseg-testscreen-a3m4-s2
+  Unknown monuseg-testscreen-a3m8-s0
+  Unknown monuseg-testscreen-a3m8-s1
+  Unknown monuseg-testscreen-a3m8-s2
+  Unknown monuseg-testscreen-a5staged-from-a3-s0
+  Unknown monuseg-testscreen-a5staged-from-a3-s1
+  Unknown monuseg-testscreen-a5staged-from-a3-s2
+  Unknown monuseg-testscreen-a5staged-no-memory-s0
+  Unknown monuseg-testscreen-a5staged-no-memory-s1
+  Unknown monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:18:38+03:00] STATUS:
+  Unknown monuseg-testscreen-a3m4-s0
+  Unknown monuseg-testscreen-a3m4-s1
+  Unknown monuseg-testscreen-a3m4-s2
+  Unknown monuseg-testscreen-a3m8-s0
+  Unknown monuseg-testscreen-a3m8-s1
+  Pending monuseg-testscreen-a3m8-s2
+  Init:0/1 monuseg-testscreen-a5staged-from-a3-s0
+  Init:0/1 monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:21:26+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:24:09+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:26:54+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:29:34+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:32:23+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:35:05+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:37:52+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:40:37+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:43:15+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:45:49+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:48:32+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Running monuseg-testscreen-a3m8-s0
+  Running monuseg-testscreen-a3m8-s1
+  Running monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:51:14+03:00] monuseg-testscreen-a3m8-s0 -> Succeeded (log saved)
+[2026-05-26T21:51:14+03:00] monuseg-testscreen-a3m8-s1 -> Succeeded (log saved)
+[2026-05-26T21:51:14+03:00] monuseg-testscreen-a3m8-s2 -> Succeeded (log saved)
+[2026-05-26T21:51:14+03:00] STATUS:
+  Running monuseg-testscreen-a3m4-s0
+  Running monuseg-testscreen-a3m4-s1
+  Running monuseg-testscreen-a3m4-s2
+  Succeeded monuseg-testscreen-a3m8-s0
+  Succeeded monuseg-testscreen-a3m8-s1
+  Succeeded monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:54:00+03:00] monuseg-testscreen-a3m4-s0 -> Succeeded (log saved)
+[2026-05-26T21:54:00+03:00] monuseg-testscreen-a3m4-s1 -> Succeeded (log saved)
+[2026-05-26T21:54:00+03:00] monuseg-testscreen-a3m4-s2 -> Succeeded (log saved)
+[2026-05-26T21:54:00+03:00] STATUS:
+  Succeeded monuseg-testscreen-a3m4-s0
+  Succeeded monuseg-testscreen-a3m4-s1
+  Succeeded monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:56:18+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T21:58:18+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:00:18+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:02:19+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:04:19+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:06:20+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Running monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:08:23+03:00] monuseg-testscreen-a5staged-no-memory-s2 -> Succeeded (log saved)
+[2026-05-26T22:08:23+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  Succeeded monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:10:23+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:12:19+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:14:14+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Running monuseg-testscreen-a5staged-from-a3-s1
+  Running monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:16:11+03:00] monuseg-testscreen-a5staged-from-a3-s1 -> Succeeded (log saved)
+[2026-05-26T22:16:11+03:00] monuseg-testscreen-a5staged-from-a3-s2 -> Succeeded (log saved)
+[2026-05-26T22:16:11+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  Succeeded monuseg-testscreen-a5staged-from-a3-s1
+  Succeeded monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:18:07+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  DONE(Succeeded) monuseg-testscreen-a5staged-from-a3-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Running monuseg-testscreen-a5staged-no-memory-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:19:56+03:00] monuseg-testscreen-a5staged-no-memory-s1 -> Error (log saved)
+[2026-05-26T22:19:56+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Running monuseg-testscreen-a5staged-from-a3-s0
+  DONE(Succeeded) monuseg-testscreen-a5staged-from-a3-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  Error monuseg-testscreen-a5staged-no-memory-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:21:41+03:00] monuseg-testscreen-a5staged-from-a3-s0 -> Error (log saved)
+[2026-05-26T22:21:41+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  Error monuseg-testscreen-a5staged-from-a3-s0
+  DONE(Succeeded) monuseg-testscreen-a5staged-from-a3-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-from-a3-s2
+  Running monuseg-testscreen-a5staged-no-memory-s0
+  DONE(Error) monuseg-testscreen-a5staged-no-memory-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:23:22+03:00] monuseg-testscreen-a5staged-no-memory-s0 -> Error (log saved)
+[2026-05-26T22:23:22+03:00] STATUS:
+  DONE(Succeeded) monuseg-testscreen-a3m4-s0
+  DONE(Succeeded) monuseg-testscreen-a3m4-s1
+  DONE(Succeeded) monuseg-testscreen-a3m4-s2
+  DONE(Succeeded) monuseg-testscreen-a3m8-s0
+  DONE(Succeeded) monuseg-testscreen-a3m8-s1
+  DONE(Succeeded) monuseg-testscreen-a3m8-s2
+  DONE(Error) monuseg-testscreen-a5staged-from-a3-s0
+  DONE(Succeeded) monuseg-testscreen-a5staged-from-a3-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-from-a3-s2
+  Error monuseg-testscreen-a5staged-no-memory-s0
+  DONE(Error) monuseg-testscreen-a5staged-no-memory-s1
+  DONE(Succeeded) monuseg-testscreen-a5staged-no-memory-s2
+[2026-05-26T22:23:22+03:00] All jobs done.
