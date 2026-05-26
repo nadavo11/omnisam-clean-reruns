@@ -278,16 +278,40 @@ class _Sam3PyramidExtractor:
             "Outputs are NOT paper-equivalent. Set paper_headline_safe=false."
         )
         inputs = processor(images=rgb, return_tensors="pt").to(model.device)
+        pixel_values = inputs["pixel_values"]
+        model_dtype = getattr(model, "dtype", None)
+        if model_dtype is not None and getattr(pixel_values, "dtype", None) != model_dtype:
+            pixel_values = pixel_values.to(dtype=model_dtype)
+        vision_source = self._resolve_transformers_vision_source(model)
         with torch_module.inference_mode():
-            outputs = model.vision_encoder(inputs["pixel_values"])
+            outputs = vision_source.get_vision_features(pixel_values=pixel_values)
         fpn_outputs = getattr(outputs, "backbone_fpn", None) or getattr(
-            outputs, "fpn_features", None
-        )
+            outputs, "fpn_hidden_states", None
+        ) or getattr(outputs, "fpn_features", None)
         if fpn_outputs is None:
             raise FrozenSamPyramidExtractorRuntimeError(
-                "SAM-3 transformers path: vision_encoder did not return backbone_fpn."
+                "SAM-3 transformers path: vision features did not return FPN outputs."
             )
         return self._pack_fpn(fpn_outputs, torch_module, rgb)
+
+    @staticmethod
+    def _resolve_transformers_vision_source(model: Any) -> Any:
+        """Return the object that actually exposes SAM-3 vision features.
+
+        HuggingFace currently returns ``Sam3VideoModel`` for ``facebook/sam3``.
+        That wrapper does not expose ``vision_encoder`` at the top level. The
+        detector submodule is the one that owns the image encoder and its
+        ``get_vision_features`` helper.
+        """
+
+        if hasattr(model, "get_vision_features"):
+            return model
+        detector_model = getattr(model, "detector_model", None)
+        if detector_model is not None and hasattr(detector_model, "get_vision_features"):
+            return detector_model
+        raise FrozenSamPyramidExtractorRuntimeError(
+            "SAM-3 transformers path: no vision feature source found on the loaded model."
+        )
 
     @staticmethod
     def _pack_fpn(
