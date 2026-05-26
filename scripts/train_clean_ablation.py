@@ -34,7 +34,7 @@ from frozen_sam_readout.data import iter_monuseg_binary_samples
 from frozen_sam_readout.evaluation.official_eval import run_official_eval
 from frozen_sam_readout.models.registry import build_head
 from frozen_sam_readout.sam import build_frozen_sam_pyramid_extractor
-from frozen_sam_readout.training import bce_dice_loss, save_checkpoint, train_one_epoch
+from frozen_sam_readout.training import bce_dice_loss, load_checkpoint, save_checkpoint, train_one_epoch
 from frozen_sam_readout.utils import load_yaml_config, set_seed, write_run_manifest
 from frozen_sam_readout.visualization import compose_strip, binary_error_map, render_gt_overlay, render_single_mask_overlay
 
@@ -193,6 +193,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-name", default=None)
     parser.add_argument("--limit-train", type=int, default=None)
     parser.add_argument("--limit-val", type=int, default=None)
+    parser.add_argument("--limit-test", type=int, default=None)
+    parser.add_argument("--run-test-eval", action="store_true", default=True)
+    parser.add_argument("--no-run-test-eval", dest="run_test_eval", action="store_false")
     parser.add_argument("--allow-wandb-failure", action="store_true", default=True)
     args = parser.parse_args(argv)
 
@@ -225,6 +228,7 @@ def main(argv: list[str] | None = None) -> int:
     fixed_sample_ids_dst.write_text(json.dumps(fixed_sample_ids, indent=2, sort_keys=True))
 
     train_samples = list(iter_monuseg_binary_samples(split="train"))
+    test_samples = list(iter_monuseg_binary_samples(split="test"))
     val_ids = fixed_sample_ids["validation_sample_ids"]
     val_samples = [s for s in train_samples if str(s.crop_name) in set(val_ids)]
     train_samples = [s for s in train_samples if str(s.crop_name) not in set(val_ids)]
@@ -232,6 +236,8 @@ def main(argv: list[str] | None = None) -> int:
         train_samples = train_samples[: int(args.limit_train)]
     if args.limit_val is not None:
         val_samples = val_samples[: int(args.limit_val)]
+    if args.limit_test is not None:
+        test_samples = test_samples[: int(args.limit_test)]
     if not val_samples:
         raise SystemExit("Validation sample selection is empty.")
 
@@ -243,9 +249,12 @@ def main(argv: list[str] | None = None) -> int:
         "fixed_sample_ids_path": str(fixed_sample_ids_src.resolve()),
         "validation_sample_ids": [str(s.crop_name) for s in val_samples],
         "train_sample_ids": [str(s.crop_name) for s in train_samples],
+        "test_sample_ids": [str(s.crop_name) for s in test_samples],
         "train_count": len(train_samples),
         "val_count": len(val_samples),
+        "test_count": len(test_samples),
         "source_train_count": len(list(iter_monuseg_binary_samples(split="train"))),
+        "source_test_count": len(list(iter_monuseg_binary_samples(split="test"))),
     }
     split_manifest_path.write_text(json.dumps(split_manifest, indent=2, sort_keys=True))
 
@@ -280,12 +289,18 @@ def main(argv: list[str] | None = None) -> int:
             "wandb_group": args.wandb_group,
             "wandb_job_type": args.wandb_job_type,
             "eval_split": "val",
+            "run_test_eval": bool(args.run_test_eval),
         },
     )
 
     device = torch.device("cuda" if (args.device in {"auto", "cuda"} and torch.cuda.is_available()) else "cpu")
     sam_cfg = config["sam"]
-    extractor = build_frozen_sam_pyramid_extractor(model_id=str(sam_cfg["model_id"]), device=args.device)
+    hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN")
+    extractor = build_frozen_sam_pyramid_extractor(
+        model_id=str(sam_cfg["model_id"]),
+        device=args.device,
+        hf_token=hf_token,
+    )
     head = _build_head(variant).to(device)
     training_cfg = config.get("training", {})
     optimizer = torch.optim.AdamW(
@@ -441,20 +456,21 @@ def main(argv: list[str] | None = None) -> int:
             "best_val_iou": best_val_iou,
         }
         val_metrics_path.write_text(json.dumps(val_summary, indent=2, sort_keys=True))
-        test_metrics_path.write_text(
-            json.dumps(
-                {
-                    "dataset": "monuseg",
-                    "variant": variant,
-                    "seed": int(args.seed),
-                    "eval_split": "test",
-                    "status": "not_run",
-                    "reason": "E1 validation-only clean ablation run",
-                },
-                indent=2,
-                sort_keys=True,
+        if not args.run_test_eval:
+            test_metrics_path.write_text(
+                json.dumps(
+                    {
+                        "dataset": "monuseg",
+                        "variant": variant,
+                        "seed": int(args.seed),
+                        "eval_split": "test",
+                        "status": "not_run",
+                        "reason": "test eval disabled for this run",
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
             )
-        )
         (out_dir / "checkpoint_sha256.txt").write_text(best_sha + "\n")
 
         if wandb_run is not None:
@@ -500,6 +516,63 @@ def main(argv: list[str] | None = None) -> int:
             f"loss={train_stats['loss']:.4f} val_dice={val_dice:.4f} val_iou={val_iou:.4f}"
         )
 
+    if args.run_test_eval:
+        load_checkpoint(best_ckpt, model=head, map_location=str(device), strict=True)
+        test_result = run_official_eval(
+            extractor=extractor,
+            head=head,
+            samples=test_samples,
+            device=device,
+            threshold=threshold,
+            resize_before_sam_hw=resize_hw,
+        )
+        test_dice = float(test_result.dice)
+        test_iou = float(test_result.iou)
+        test_summary = {
+            "dataset": "monuseg",
+            "variant": variant,
+            "seed": int(args.seed),
+            "epoch": int(args.epochs),
+            "eval_split": "test",
+            "checkpoint_path": str(best_ckpt.resolve()),
+            "checkpoint_sha256": _sha256(best_ckpt),
+            "config_path": str(Path(args.config).resolve()),
+            "split_manifest_path": str(split_manifest_path.resolve()),
+            "fixed_sample_ids_path": str(fixed_sample_ids_dst.resolve()),
+            "test_dice": test_dice,
+            "test_iou": test_iou,
+            "selected_by": "best_val_dice",
+            "best_val_dice": best_val_dice,
+            "best_val_iou": best_val_iou,
+        }
+        test_metrics_path.write_text(json.dumps(test_summary, indent=2, sort_keys=True))
+        if wandb_run is not None:
+            try:
+                wandb_run.summary.update(
+                    {
+                        "test/dice": test_dice,
+                        "test/iou": test_iou,
+                        "test/eval_split": "test",
+                        "test/checkpoint_path": str(best_ckpt.resolve()),
+                        "test/checkpoint_sha256": _sha256(best_ckpt),
+                    }
+                )
+                wandb_run.log(
+                    {
+                        "test/dice": test_dice,
+                        "test/iou": test_iou,
+                        "provenance/test_eval_split": "test",
+                    }
+                )
+                wandb_run.finish()
+            except Exception as exc:
+                print(f"[warn] wandb test logging failed: {exc}", file=sys.stderr)
+
+        print(
+            f"[{run_name}] final test_dice={test_dice:.4f} test_iou={test_iou:.4f} "
+            f"(selected_by=best_val_dice)"
+        )
+
     if wandb_run is not None:
         try:
             wandb_run.finish()
@@ -508,7 +581,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Saved best checkpoint: {best_ckpt}")
     print(f"Saved val metrics: {val_metrics_path}")
-    print(f"Saved test stub: {test_metrics_path}")
+    print(f"Saved test metrics: {test_metrics_path}")
     return 0
 
 
