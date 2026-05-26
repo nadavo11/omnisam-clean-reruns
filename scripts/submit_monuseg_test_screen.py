@@ -31,10 +31,10 @@ VARIANTS = {
 }
 
 VARIANT_NAMES = {
-    "A3M4": "monuseg-testscreen-A3M4",
-    "A3M8": "monuseg-testscreen-A3M8",
-    "A5staged": "monuseg-testscreen-A5staged-from-A3",
-    "A5noMem": "monuseg-testscreen-A5staged-no-memory",
+    "A3M4": "monuseg-testscreen-a3m4",
+    "A3M8": "monuseg-testscreen-a3m8",
+    "A5staged": "monuseg-testscreen-a5staged-from-a3",
+    "A5noMem": "monuseg-testscreen-a5staged-no-memory",
 }
 
 
