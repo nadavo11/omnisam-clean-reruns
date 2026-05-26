@@ -60,8 +60,8 @@ def _load_fixed_sample_ids(path: str | Path) -> dict:
     return payload
 
 
-def _build_head(variant: str) -> torch.nn.Module:
-    kwargs = dict(_DEFAULT_CHANNELS)
+def _build_head(variant: str, channels: dict | None = None) -> torch.nn.Module:
+    kwargs = dict(channels or _DEFAULT_CHANNELS)
     if variant == "a0_fpn2":
         kwargs.pop("f1_channels", None)
         kwargs.pop("f0_channels", None)
@@ -70,6 +70,20 @@ def _build_head(variant: str) -> torch.nn.Module:
     if variant == "a3_memory":
         kwargs["memory_tokens"] = 8
     return build_head(variant, **kwargs)
+
+
+def _probe_backbone_channels(extractor, sample, resize_hw: tuple[int, int] | None) -> dict:
+    """Extract one sample to discover actual FPN channel counts from this backbone."""
+    img = _resize_image(sample.image, resize_hw)
+    _, pyramid_np = extractor.extract_sam_pyramid(img)
+    channels = dict(_DEFAULT_CHANNELS)
+    if "fpn_2" in pyramid_np:
+        channels["f2_channels"] = int(pyramid_np["fpn_2"].shape[0])
+    if "fpn_1" in pyramid_np:
+        channels["f1_channels"] = int(pyramid_np["fpn_1"].shape[0])
+    if "fpn_0" in pyramid_np:
+        channels["f0_channels"] = int(pyramid_np["fpn_0"].shape[0])
+    return channels
 
 
 def _resize_image(image: Image.Image, resize_hw: tuple[int, int] | None) -> Image.Image:
@@ -296,20 +310,23 @@ def main(argv: list[str] | None = None) -> int:
     device = torch.device("cuda" if (args.device in {"auto", "cuda"} and torch.cuda.is_available()) else "cpu")
     sam_cfg = config["sam"]
     hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN")
+    resize = config["dataset"].get("resize_before_sam")
+    resize_hw = (int(resize["height"]), int(resize["width"])) if resize else None
     extractor = build_frozen_sam_pyramid_extractor(
         model_id=str(sam_cfg["model_id"]),
         device=args.device,
         hf_token=hf_token,
     )
-    head = _build_head(variant).to(device)
+    probe_sample = (train_samples + val_samples)[0]
+    actual_channels = _probe_backbone_channels(extractor, probe_sample, resize_hw)
+    print(f"[info] backbone channel probe: {actual_channels}", flush=True)
+    head = _build_head(variant, channels=actual_channels).to(device)
     training_cfg = config.get("training", {})
     optimizer = torch.optim.AdamW(
         [p for p in head.parameters() if p.requires_grad],
         lr=float(training_cfg.get("lr", 1e-4)),
         weight_decay=float(training_cfg.get("weight_decay", 1e-4)),
     )
-    resize = config["dataset"].get("resize_before_sam")
-    resize_hw = (int(resize["height"]), int(resize["width"])) if resize else None
 
     wandb_run = None
     wandb_url = "unavailable"
