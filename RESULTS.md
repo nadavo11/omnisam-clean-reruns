@@ -1,6 +1,8 @@
 # Results
 
-All numbers below are pinned in `results/official_result_lock.yaml`.
+MoNuSeg entries below are historical train-evaluated artifacts and are not
+valid paper evidence. GlaS entries remain the clean held-out official eval
+results. See `reports/split_contamination_audit.md`.
 
 ## MoNuSeg-strict-512
 

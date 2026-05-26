@@ -1,0 +1,3 @@
+model:
+  variant: a2_fpn2_fpn1_refine
+  decoder_dim: 128

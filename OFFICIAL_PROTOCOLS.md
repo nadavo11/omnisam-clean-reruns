@@ -6,7 +6,8 @@ Anything that violates a guard listed below is research-only.
 ## MoNuSeg-strict-512 (`configs/official/monuseg_strict_512.yaml`)
 
 - Dataset: `RationAI/MoNuSeg` HF mirror, official challenge split (30 train +
-  14 test). Excludes the 7 extra HF `tissue == 0` train rows.
+  14 test). Excludes the 7 extra HF `tissue == 0` train rows. Training uses
+  the official train split; official evaluation uses the held-out test split.
 - Pre-SAM resize: 512 x 512 bilinear.
 - SAM: frozen, no prompt encoder, no mask decoder.
 - Training: 40 ep stage-1 → 40 ep stage-2, AdamW, lr 1e-4, wd 1e-4, bs 1.
@@ -16,6 +17,7 @@ Anything that violates a guard listed below is research-only.
 ## GlaS-fixed-224 (`configs/official/glas_fixed_224.yaml`)
 
 - Dataset: local Warwick GlaS layout (AutoSAM flat directory).
+- Official evaluation uses the held-out test split.
 - Pre-SAM resize: 224 x 224 bilinear.
 - SAM: frozen, no prompt encoder, no mask decoder.
 - Training: 200 ep stage-1 → 40 ep stage-2, AdamW, lr 1e-4, wd 1e-4, bs 1.
@@ -26,6 +28,7 @@ Anything that violates a guard listed below is research-only.
 - `sam.frozen` must be `true`.
 - `sam.use_prompt_encoder` must be `false`.
 - `sam.use_mask_decoder` must be `false`.
+- `evaluation.split` must be `"test"`.
 - `evaluation.threshold` must equal `0.5`.
 
 The audit script `scripts/audit_protocol.py` runs these guards and can also
@@ -41,6 +44,7 @@ The `official_metrics.json` schema written by `scripts/eval_official.py`:
   "protocol": "monuseg_strict_512",
   "variant": "final_staged",
   "checkpoint": "...",
+  "eval_split": "test",
   "seed": 0,
   "headline_metrics": {"direct_foreground_dice": 0.0, "direct_foreground_iou": 0.0},
   "auxiliary_metrics": {"upstream_eval_dice": null, "upstream_eval_iou": null},

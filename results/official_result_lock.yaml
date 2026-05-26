@@ -1,4 +1,6 @@
 # Locked official results for the Staged Multiscale Frozen-SAM3 Readout.
+# WARNING: MoNuSeg entries are historical train-evaluated artifacts and are
+# not valid paper evidence. See reports/split_contamination_audit.md.
 # Numbers come from experiments/corrected_global_memory_feature_readout/phase4_phase5_summary.md.
 #
 # 2026-05-25: a5_all_at_once updated from obsolete 0.8124/0.6865 (run ce-monu-a5-v2-2930351,
@@ -16,6 +18,7 @@ monuseg:
     a3_memory:         {direct_foreground_dice: 0.8339, direct_foreground_iou: 0.7161}
     a5_all_at_once:    {direct_foreground_dice: 0.8392, direct_foreground_iou: 0.7239}
     final_staged:
+      checkpoint_path: /storage/nada/outputs/fixed_resize_enhancement/monuseg_A5lrn_staged_from_A3s0_e40/checkpoint.pt
       direct_foreground_dice: 0.8545
       direct_foreground_dice_std: 0.0050
       direct_foreground_iou: 0.7467

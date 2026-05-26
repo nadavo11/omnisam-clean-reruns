@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import torch
 from PIL import Image
 
 from frozen_sam_readout.visualization import (
@@ -17,6 +18,9 @@ from frozen_sam_readout.visualization import (
     compose_strip,
     save_official_visuals,
 )
+from frozen_sam_readout.models.registry import build_head
+from frozen_sam_readout.training.checkpointing import save_checkpoint
+from scripts.make_official_visuals import _load_checkpoint_head
 
 
 def _rand_rgb(h: int, w: int) -> np.ndarray:
@@ -86,6 +90,12 @@ class TestSaveOfficialVisuals:
             protocol="monuseg_strict_512",
             config="configs/official/monuseg_strict_512.yaml",
             checkpoints={"a0_fpn2": "/fake/A0.pt", "final_staged": "/fake/final.pt"},
+            provenance={
+                "script": "scripts/make_official_visuals.py",
+                "command": "python scripts/make_official_visuals.py ...",
+                "generated_image_count": len(panels),
+                "evaluation_split": "test",
+            },
         )
 
         # Manifest written and parseable.
@@ -106,6 +116,10 @@ class TestSaveOfficialVisuals:
 
         # LaTeX snippet written.
         assert (tmp_path / "figure_grid.tex").exists()
+        assert (tmp_path / "provenance.json").exists()
+        provenance = json.loads((tmp_path / "provenance.json").read_text())
+        assert provenance["generated_image_count"] == 3
+        assert provenance["evaluation_split"] == "test"
         tex = (tmp_path / "figure_grid.tex").read_text()
         assert "\\begin{figure}" in tex
         assert "\\includegraphics" in tex
@@ -115,3 +129,18 @@ class TestSaveOfficialVisuals:
         gt_path = tmp_path / m["samples"][0]["panels"]["gt"]
         gt_img = np.asarray(Image.open(gt_path))
         assert gt_img.ndim == 3, "Panel images must be RGB"
+
+
+def test_native_checkpoint_loads_for_visuals(tmp_path):
+    head = build_head(
+        "final_staged",
+        f2_channels=256,
+        f1_channels=64,
+        f0_channels=32,
+        memory_tokens=8,
+    )
+    ckpt = tmp_path / "checkpoint.pt"
+    save_checkpoint(ckpt, model=head, epoch=1)
+
+    loaded = _load_checkpoint_head("final_staged", ckpt, device=torch.device("cpu"))
+    assert loaded.__class__.__name__ == head.__class__.__name__

@@ -108,6 +108,7 @@ class VisualsManifest:
     protocol: str
     config: str
     checkpoints: Dict[str, str]
+    provenance: Dict[str, Any] = field(default_factory=dict)
     samples: List[Dict[str, Any]] = field(default_factory=list)
     error_color_map: Dict[str, list] = field(default_factory=lambda: {
         k: list(v) for k, v in ERROR_COLOR_MAP.items()
@@ -130,6 +131,7 @@ def save_official_visuals(
     protocol: str,
     config: str,
     checkpoints: Dict[str, str],
+    provenance: Dict[str, Any] | None = None,
     wandb_run: Any = None,
     wandb_key_prefix: str = "visuals",
 ) -> Path:
@@ -159,6 +161,7 @@ def save_official_visuals(
         protocol=protocol,
         config=config,
         checkpoints=checkpoints,
+        provenance=provenance or {},
     )
 
     for n, sp in enumerate(sample_panels):
@@ -203,6 +206,10 @@ def save_official_visuals(
     manifest_path = out / "visuals_manifest.json"
     manifest_path.write_text(json.dumps(manifest_dict, indent=2))
     LOGGER.info("Wrote manifest → %s", manifest_path)
+
+    provenance_path = out / "provenance.json"
+    provenance_path.write_text(json.dumps(provenance or {}, indent=2, sort_keys=True))
+    LOGGER.info("Wrote provenance sidecar → %s", provenance_path)
 
     # ── 5. LaTeX snippet ─────────────────────────────────────────────────────
     _write_latex_snippet(out, sample_panels, manifest)

@@ -1,0 +1,12 @@
+{
+  "dataset": "monuseg",
+  "selection_policy": "first_6_official_train_ids_in_source_order",
+  "validation_sample_ids": [
+    "TCGA-38-6178-01Z-00-DX1",
+    "TCGA-HE-7129-01Z-00-DX1",
+    "TCGA-A7-A13E-01Z-00-DX1",
+    "TCGA-HE-7128-01Z-00-DX1",
+    "TCGA-G9-6356-01Z-00-DX1",
+    "TCGA-AY-A8YK-01A-01-TS1"
+  ]
+}

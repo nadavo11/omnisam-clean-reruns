@@ -1,7 +1,7 @@
 dataset:
   name: monuseg
   root_or_name: RationAI/MoNuSeg
-  split: train  # official MoNuSeg challenge training set (30 WSI patches) — used as eval benchmark
+  split: train  # official MoNuSeg challenge training set (30 WSI patches); training uses this split
   resize_before_sam:
     height: 512
     width: 512
@@ -25,6 +25,7 @@ training:
 
 evaluation:
   official: true
+  split: test  # official evaluation is on the held-out MoNuSeg test split (14 WSI patches)
   metrics:
     - direct_foreground_dice
     - direct_foreground_iou

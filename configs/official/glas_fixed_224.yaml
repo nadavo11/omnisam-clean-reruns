@@ -25,6 +25,7 @@ training:
 
 evaluation:
   official: true
+  split: test  # official evaluation is on the held-out GlaS test split
   metrics:
     - direct_foreground_dice
     - direct_foreground_iou

@@ -7,7 +7,7 @@ from frozen_sam_readout.utils.config import ConfigGuardError, validate_official_
 
 _GOOD = {
     "sam": {"model_id": "sam-vit-h", "frozen": True, "use_prompt_encoder": False, "use_mask_decoder": False},
-    "evaluation": {"threshold": 0.5},
+    "evaluation": {"split": "test", "threshold": 0.5},
     "guards": {"fail_if_sam_trainable": True, "fail_if_prompt_encoder_used": True, "fail_if_mask_decoder_used": True},
 }
 
@@ -36,6 +36,12 @@ def test_mask_decoder_fails():
 
 def test_wrong_threshold_fails():
     bad = {**_GOOD, "evaluation": {"threshold": 0.7}}
+    with pytest.raises(ConfigGuardError):
+        validate_official_guards(bad)
+
+
+def test_train_split_fails():
+    bad = {**_GOOD, "evaluation": {**_GOOD["evaluation"], "split": "train"}}
     with pytest.raises(ConfigGuardError):
         validate_official_guards(bad)
 

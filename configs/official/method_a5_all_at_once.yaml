@@ -1,0 +1,8 @@
+model:
+  variant: a5_all_at_once
+  decoder_dim: 128
+  memory_tokens: 8
+  f0:
+    mode: learned_alpha_residual
+    alpha_init: 0.05
+    final_layer_zero_init: true

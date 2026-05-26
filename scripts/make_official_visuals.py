@@ -22,6 +22,8 @@ Usage example:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -33,7 +35,9 @@ from PIL import Image
 
 from frozen_sam_readout.data import build_dataset_iter
 from frozen_sam_readout.models.compat.source_loader import load_source_checkpoint_head
+from frozen_sam_readout.models.registry import build_head
 from frozen_sam_readout.sam import build_frozen_sam_pyramid_extractor
+from frozen_sam_readout.training.checkpointing import load_checkpoint
 from frozen_sam_readout.utils import load_yaml_config
 from frozen_sam_readout.visualization import SamplePanels, save_official_visuals
 
@@ -44,6 +48,7 @@ _VARIANT_MAP: list[tuple[str, str, str]] = [
     ("a3_memory",          "pred_a3",    "A3"),
     ("final_staged",       "pred_final", "final_staged"),
 ]
+_DEFAULT_CHANNELS = {"f2_channels": 256, "f1_channels": 64, "f0_channels": 32}
 
 
 def _resolve_device(device_arg: str) -> torch.device:
@@ -65,6 +70,45 @@ def _find_checkpoint(ckpt_dir: Path | None, subfolder: str) -> Path | None:
         if candidate.exists():
             return candidate
     return None
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _resolve_official_eval_split(cfg: dict) -> str:
+    return str(cfg.get("evaluation", {}).get("split", "test"))
+
+
+def _build_native_head(variant: str) -> torch.nn.Module:
+    kwargs = dict(_DEFAULT_CHANNELS)
+    if variant == "a0_fpn2":
+        kwargs.pop("f1_channels", None)
+        kwargs.pop("f0_channels", None)
+    elif variant in {"a2_fpn2_fpn1_refine", "a3_memory"}:
+        kwargs.pop("f0_channels", None)
+    if variant in {"a3_memory", "a5_all_at_once", "final_staged"}:
+        kwargs["memory_tokens"] = 8
+    if variant in {"a5_all_at_once", "final_staged"}:
+        kwargs["alpha_init"] = 0.05
+    if variant == "final_staged":
+        kwargs["projection_dim"] = 128
+        kwargs["final_layer_zero_init"] = True
+    return build_head(variant, **kwargs)
+
+
+def _load_checkpoint_head(variant: str, checkpoint: Path, device: torch.device) -> torch.nn.Module:
+    payload = torch.load(str(checkpoint), map_location="cpu", weights_only=False)
+    if isinstance(payload, dict) and "head_state_dict" in payload:
+        return load_source_checkpoint_head(str(checkpoint), device=device)
+
+    head = _build_native_head(variant).to(device)
+    load_checkpoint(checkpoint, model=head, map_location=str(device), strict=True)
+    return head.eval()
 
 
 def _predict(
@@ -104,6 +148,11 @@ def main(argv=None) -> int:
     parser.add_argument("--limit", type=int, default=14, help="Max samples to visualise.")
     parser.add_argument("--threshold", type=float, default=0.5)
     parser.add_argument("--device", default="auto")
+    parser.add_argument(
+        "--final-staged-only",
+        action="store_true",
+        help="Load only the canonical final_staged checkpoint and emit final visuals.",
+    )
     parser.add_argument("--wandb-project", default=None,
                         help="wandb project name. Omit to skip wandb logging.")
     args = parser.parse_args(argv)
@@ -111,6 +160,7 @@ def main(argv=None) -> int:
     cfg = load_yaml_config(args.config)
     device = _resolve_device(args.device)
     ckpt_root = Path(args.checkpoint_dir) if args.checkpoint_dir else None
+    eval_split = _resolve_official_eval_split(cfg)
 
     # ── SAM extractor ────────────────────────────────────────────────────────
     sam_cfg = cfg["sam"]
@@ -121,25 +171,42 @@ def main(argv=None) -> int:
     # ── Load variant heads ────────────────────────────────────────────────────
     heads: dict[str, torch.nn.Module] = {}
     checkpoint_paths: dict[str, str] = {}
-    for variant, _field, subfolder in _VARIANT_MAP:
+    if args.final_staged_only:
+        variant_map = [item for item in _VARIANT_MAP if item[0] == "final_staged"]
+    else:
+        variant_map = list(_VARIANT_MAP)
+
+    missing_variants: list[str] = []
+    for variant, _field, subfolder in variant_map:
         ckpt = _find_checkpoint(ckpt_root, subfolder)
         if ckpt is not None:
-            head = load_source_checkpoint_head(str(ckpt), device=device)
+            head = _load_checkpoint_head(variant, ckpt, device)
             checkpoint_paths[variant] = str(ckpt)
             print(f"  Loaded {variant} ← {ckpt}")
         else:
-            print(f"  [skip] no checkpoint found for {variant} — skipping variant")
+            if args.final_staged_only and variant == "final_staged":
+                raise FileNotFoundError(
+                    "final_staged checkpoint not found in checkpoint-dir; "
+                    "this mode requires the canonical final_staged checkpoint."
+                )
+            if not args.final_staged_only:
+                missing_variants.append(variant)
             checkpoint_paths[variant] = ""
             heads[variant] = None
             continue
         heads[variant] = head
+
+    if missing_variants:
+        raise FileNotFoundError(
+            "Missing comparison checkpoints for: " + ", ".join(sorted(missing_variants))
+        )
 
     # ── Dataset ───────────────────────────────────────────────────────────────
     ds_cfg = cfg["dataset"]
     resize = ds_cfg.get("resize_before_sam")
     resize_hw = (int(resize["height"]), int(resize["width"])) if resize else None
 
-    ds_kwargs = dict(split=ds_cfg.get("split", "test"), limit=args.limit)
+    ds_kwargs = dict(split=eval_split, limit=args.limit)
     root_or_name = ds_cfg.get("root_or_name")
     if root_or_name:
         ds_kwargs["dataset_root"] = root_or_name
@@ -187,6 +254,24 @@ def main(argv=None) -> int:
         print(f"  [{si+1}/{len(samples)}] {sample_id}")
 
     # ── Save everything ───────────────────────────────────────────────────────
+    provenance = {
+        "script": str(Path(__file__).resolve()),
+        "command": shlex.join(sys.argv),
+        "config_path": str(Path(args.config).resolve()),
+        "dataset": str(ds_cfg["name"]),
+        "protocol": Path(args.config).stem,
+        "generated_image_count": len(all_panels),
+        "evaluation_split": eval_split,
+        "checkpoint_dir": str(ckpt_root) if ckpt_root is not None else None,
+        "checkpoints": {
+            variant: {
+                "path": path,
+                "sha256": _sha256(Path(path)) if path else None,
+            }
+            for variant, path in checkpoint_paths.items()
+        },
+        "final_staged_only": bool(args.final_staged_only),
+    }
     manifest_path = save_official_visuals(
         sample_panels=all_panels,
         output_dir=args.output_dir,
@@ -194,6 +279,7 @@ def main(argv=None) -> int:
         protocol=Path(args.config).stem,
         config=args.config,
         checkpoints=checkpoint_paths,
+        provenance=provenance,
         wandb_run=wandb_run,
         wandb_key_prefix="visuals",
     )

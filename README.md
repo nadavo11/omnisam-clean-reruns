@@ -9,6 +9,10 @@ GlaS-fixed-224.
 
 ## Headline results
 
+MoNuSeg numbers below are historical train-evaluated artifacts and are not
+valid paper evidence. See `reports/split_contamination_audit.md` and
+`reports/invalidated_train_eval/`.
+
 | Dataset | Variant | Dice | IoU |
 |---|---|---|---|
 | MoNuSeg-strict-512 | A0 (`fpn_2` only) | 0.8103 | 0.6835 |
@@ -34,7 +38,7 @@ python scripts/audit_protocol.py --config configs/official/monuseg_strict_512.ya
 python scripts/eval_official.py \
     --config configs/official/monuseg_strict_512.yaml \
     --method-config configs/official/method_staged_multiscale.yaml \
-    --checkpoint checkpoints/final_staged_seed0/stage2.pt \
+    --checkpoint checkpoints/final_staged_seed0/checkpoint.pt \
     --output results/official_metrics/monuseg/final_staged_seed0
 ```
 
