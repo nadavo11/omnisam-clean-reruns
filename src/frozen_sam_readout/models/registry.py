@@ -11,6 +11,7 @@ from .heads import (
     A2Fpn2Fpn1RefineHead,
     A3MemoryHead,
     A5F0ResidualHead,
+    StagedA2ReadoutHead,
     StagedMultiscaleReadoutHead,
 )
 
@@ -21,6 +22,7 @@ MODEL_REGISTRY: Dict[str, Type[nn.Module]] = {
     "a3_memory": A3MemoryHead,
     "a5_all_at_once": A5F0ResidualHead,
     "final_staged": StagedMultiscaleReadoutHead,
+    "final_staged_a2": StagedA2ReadoutHead,
 }
 
 

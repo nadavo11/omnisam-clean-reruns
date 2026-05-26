@@ -43,3 +43,30 @@ The MoNuSeg protocol was treated as an official evaluation path while the eviden
 - The GlaS official metrics remain useful as held-out baselines while the MoNuSeg rerun stack is rebuilt.
 - Any paper-facing table derived from train-evaluated MoNuSeg metrics is invalid until rerun under E1/E2 discipline.
 
+---
+
+## Event 2: First Clean E1 Matrix — Premature Test Exposure (2026-05-26)
+
+**Severity:** ORANGE (premature official test eval; not train-on-test leakage)  
+**Status:** Fixed; v2 reruns submitted
+
+**What happened:**  
+`train_clean_ablation.py` commit 946590a introduced `--run-test-eval` with `default=True`.  
+The E1 launcher never passed `--no-run-test-eval`.  
+All 9 E1 jobs (A0/A2/A3 × seeds 0/1/2) evaluated on `dataset["test"]` (14 official test crops)  
+immediately after best-val checkpoint selection — before E1 model selection was complete.
+
+**Secondary issue:** HF SAM-3 fallback returned 256ch for all FPN levels.  
+A2/A3 ran with non-paper-equivalent channel layout (f1_channels=256 instead of 64).
+
+**Remediation:**  
+- `--run-test-eval` default → False  
+- E1 split contract guard added (raises if run-test-eval + E1 job type without explicit override)  
+- `--no-run-test-eval` added to launcher  
+- Regression test: `tests/test_e1_e2_split_contract.py`  
+- V2 reruns: `monuseg_E1_{A0,A2,A3}_s{0,1,2}_clean_v2`  
+- Quarantined: `invalidated_train_eval/premature_test_exposure_first_clean_matrix.md`  
+- Full audit: `e1_split_audit_after_first_matrix.md`
+
+**Jobs affected:** monuseg_E1_A0_s{0,1,2}_clean, monuseg_E1_A2_s{0,1,2}_clean, monuseg_E1_A3_s{0,1,2}_clean
+

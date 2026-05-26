@@ -12,6 +12,31 @@ class ConfigGuardError(RuntimeError):
     """Raised when an official-protocol guard is violated."""
 
 
+# MoNuSeg has no real validation set.  The only clean held-out split is the
+# official test split.  Raise loudly before any run attempt reaches data.
+_MONUSEG_FORBIDDEN_EVAL_SPLITS = {"val", "validation", "valid"}
+
+
+def assert_monuseg_no_val(dataset_name: str, eval_split: str) -> None:
+    """Raise if a caller tries to use val/validation as eval split for MoNuSeg.
+
+    MoNuSeg train-side splits (6-sample subsets etc.) look like validation but
+    are drawn from the training distribution and must never be presented as
+    unbiased ablation evidence.  Only eval_split='test' or 'train_smoke' are
+    permitted.
+    """
+    if str(dataset_name).lower() not in {"monuseg", "RationAI/MoNuSeg".lower()}:
+        return
+    if str(eval_split).lower() in _MONUSEG_FORBIDDEN_EVAL_SPLITS:
+        raise ConfigGuardError(
+            f"MoNuSeg has no real validation set. "
+            f"eval_split={eval_split!r} is forbidden for MoNuSeg. "
+            f"Use eval_split='test' for ablation results or "
+            f"eval_split='train_smoke' (non-claimable) for debug overfit checks. "
+            f"Do not create MoNuSeg val splits."
+        )
+
+
 def load_yaml_config(path: str | Path) -> Dict[str, Any]:
     with Path(path).open("r", encoding="utf-8") as handle:
         loaded = yaml.safe_load(handle) or {}

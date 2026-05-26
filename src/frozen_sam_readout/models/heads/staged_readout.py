@@ -21,6 +21,7 @@ import torch
 import torch.nn as nn
 
 from ..blocks.learned_alpha import LearnedAlphaResidual
+from .a2_fpn2_fpn1_refine import A2Fpn2Fpn1RefineHead
 from .a3_memory import A3MemoryHead
 
 
@@ -72,3 +73,50 @@ class StagedMultiscaleReadoutHead(nn.Module):
         if not self._f0_enabled or "fpn_0" not in pyramid:
             return l_a3
         return self.f0_residual(pyramid["fpn_0"], l_a3)
+
+
+class StagedA2ReadoutHead(nn.Module):
+    """Staged variant without memory attention: A2 (fpn_2+fpn_1 refine) + F0 residual.
+
+    Stage 1: train A2 (coarse fpn_2 readout + fpn_1 residual refine, no memory).
+    Stage 2: add learned-alpha F0 residual on top, train jointly.
+
+    Ablation control: tests whether memory attention in the staged protocol
+    contributes beyond the A2+F0 baseline.
+    """
+
+    def __init__(
+        self,
+        f2_channels: int,
+        f1_channels: int,
+        f0_channels: int,
+        decoder_dim: int = 128,
+        alpha_init: float = 0.05,
+        final_layer_zero_init: bool = True,
+    ) -> None:
+        super().__init__()
+        self.a2 = A2Fpn2Fpn1RefineHead(
+            f2_channels=f2_channels,
+            f1_channels=f1_channels,
+            decoder_dim=decoder_dim,
+        )
+        self.f0_residual = LearnedAlphaResidual(
+            f0_channels=f0_channels,
+            decoder_dim=decoder_dim,
+            alpha_init=alpha_init,
+            final_layer_zero_init=final_layer_zero_init,
+        )
+        self._f0_enabled = True
+
+    def set_f0_enabled(self, enabled: bool) -> None:
+        self._f0_enabled = bool(enabled)
+
+    @property
+    def alpha(self) -> Optional[torch.Tensor]:
+        return self.f0_residual.alpha if self._f0_enabled else None
+
+    def forward(self, pyramid: dict[str, torch.Tensor]) -> torch.Tensor:
+        l_a2 = self.a2(pyramid)
+        if not self._f0_enabled or "fpn_0" not in pyramid:
+            return l_a2
+        return self.f0_residual(pyramid["fpn_0"], l_a2)

@@ -1,0 +1,80 @@
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+wandb: uploading history steps 39-39, summary, console lines 1276-1293; updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading output.log
+wandb: uploading history steps 40-40, summary
+wandb: 
+wandb: Run history:
+wandb:      epoch ▁▁▁▂▂▂▂▂▂▃▃▃▃▃▄▄▄▄▄▄▅▅▅▅▅▅▆▆▆▆▆▇▇▇▇▇▇███
+wandb:  test/dice ▁
+wandb:   test/iou ▁
+wandb: train/loss █▅▄▃▃▃▃▃▃▃▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁
+wandb:   train/lr ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:   val/dice ▁▆▇█████▇▇▇▇▇▇▆▆▆▆▆▅▅▅▅▅▅▄▄▄▄▄▄▃▃▃▃▃▃▃▃▃
+wandb:    val/iou ▁▆▇█████▇▇▇▇▇▇▆▆▆▆▆▆▆▅▅▅▅▅▅▄▄▄▄▄▄▄▄▄▄▄▃▃
+wandb: 
+wandb: Run summary:
+wandb:              checkpoint_path /storage/nada/ce1/a0...
+wandb:            checkpoint_sha256 c058d14ac5ef6954f58b...
+wandb:                  config_path /storage/nada/ce1/a0...
+wandb:                        epoch 40
+wandb:                   eval_split val
+wandb:        fixed_sample_ids_path /storage/nada/ce1/a0...
+wandb:   provenance/checkpoint_path /storage/nada/ce1/a0...
+wandb: provenance/checkpoint_sha256 c058d14ac5ef6954f58b...
+wandb:       provenance/config_path /storage/nada/ce1/a0...
+wandb:        provenance/eval_split val
+wandb:                          +12 ...
+wandb: 
+wandb: 🚀 View run monuseg_E1_A0_s2_clean at: https://wandb.ai/nadavoteam/frozen-sam-readout/runs/ybstrcid
+wandb: ⭐️ View project at: https://wandb.ai/nadavoteam/frozen-sam-readout
+wandb: Synced 5 W&B file(s), 40 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260526_131755-ybstrcid/logs
+[monuseg_E1_A0_s2_clean] epoch 1/40 loss=0.4499 val_dice=0.6638 val_iou=0.5037
+[monuseg_E1_A0_s2_clean] epoch 2/40 loss=0.3167 val_dice=0.6910 val_iou=0.5338
+[monuseg_E1_A0_s2_clean] epoch 3/40 loss=0.2852 val_dice=0.6987 val_iou=0.5425
+[monuseg_E1_A0_s2_clean] epoch 4/40 loss=0.2679 val_dice=0.7014 val_iou=0.5456
+[monuseg_E1_A0_s2_clean] epoch 5/40 loss=0.2567 val_dice=0.7019 val_iou=0.5462
+[monuseg_E1_A0_s2_clean] epoch 6/40 loss=0.2486 val_dice=0.7015 val_iou=0.5457
+[monuseg_E1_A0_s2_clean] epoch 7/40 loss=0.2424 val_dice=0.7007 val_iou=0.5448
+[monuseg_E1_A0_s2_clean] epoch 8/40 loss=0.2373 val_dice=0.6998 val_iou=0.5438
+[monuseg_E1_A0_s2_clean] epoch 9/40 loss=0.2330 val_dice=0.6989 val_iou=0.5428
+[monuseg_E1_A0_s2_clean] epoch 10/40 loss=0.2293 val_dice=0.6979 val_iou=0.5418
+[monuseg_E1_A0_s2_clean] epoch 11/40 loss=0.2260 val_dice=0.6969 val_iou=0.5407
+[monuseg_E1_A0_s2_clean] epoch 12/40 loss=0.2231 val_dice=0.6960 val_iou=0.5398
+[monuseg_E1_A0_s2_clean] epoch 13/40 loss=0.2204 val_dice=0.6951 val_iou=0.5389
+[monuseg_E1_A0_s2_clean] epoch 14/40 loss=0.2179 val_dice=0.6942 val_iou=0.5380
+[monuseg_E1_A0_s2_clean] epoch 15/40 loss=0.2156 val_dice=0.6932 val_iou=0.5370
+[monuseg_E1_A0_s2_clean] epoch 16/40 loss=0.2134 val_dice=0.6921 val_iou=0.5360
+[monuseg_E1_A0_s2_clean] epoch 17/40 loss=0.2112 val_dice=0.6911 val_iou=0.5350
+[monuseg_E1_A0_s2_clean] epoch 18/40 loss=0.2092 val_dice=0.6901 val_iou=0.5340
+[monuseg_E1_A0_s2_clean] epoch 19/40 loss=0.2072 val_dice=0.6891 val_iou=0.5331
+[monuseg_E1_A0_s2_clean] epoch 20/40 loss=0.2053 val_dice=0.6881 val_iou=0.5321
+[monuseg_E1_A0_s2_clean] epoch 21/40 loss=0.2034 val_dice=0.6872 val_iou=0.5312
+[monuseg_E1_A0_s2_clean] epoch 22/40 loss=0.2015 val_dice=0.6862 val_iou=0.5302
+[monuseg_E1_A0_s2_clean] epoch 23/40 loss=0.1997 val_dice=0.6851 val_iou=0.5292
+[monuseg_E1_A0_s2_clean] epoch 24/40 loss=0.1979 val_dice=0.6841 val_iou=0.5282
+[monuseg_E1_A0_s2_clean] epoch 25/40 loss=0.1960 val_dice=0.6830 val_iou=0.5271
+[monuseg_E1_A0_s2_clean] epoch 26/40 loss=0.1942 val_dice=0.6820 val_iou=0.5261
+[monuseg_E1_A0_s2_clean] epoch 27/40 loss=0.1924 val_dice=0.6811 val_iou=0.5252
+[monuseg_E1_A0_s2_clean] epoch 28/40 loss=0.1906 val_dice=0.6801 val_iou=0.5242
+[monuseg_E1_A0_s2_clean] epoch 29/40 loss=0.1887 val_dice=0.6793 val_iou=0.5234
+[monuseg_E1_A0_s2_clean] epoch 30/40 loss=0.1869 val_dice=0.6787 val_iou=0.5228
+[monuseg_E1_A0_s2_clean] epoch 31/40 loss=0.1850 val_dice=0.6780 val_iou=0.5221
+[monuseg_E1_A0_s2_clean] epoch 32/40 loss=0.1831 val_dice=0.6774 val_iou=0.5215
+[monuseg_E1_A0_s2_clean] epoch 33/40 loss=0.1813 val_dice=0.6767 val_iou=0.5208
+[monuseg_E1_A0_s2_clean] epoch 34/40 loss=0.1793 val_dice=0.6761 val_iou=0.5202
+[monuseg_E1_A0_s2_clean] epoch 35/40 loss=0.1774 val_dice=0.6757 val_iou=0.5198
+[monuseg_E1_A0_s2_clean] epoch 36/40 loss=0.1754 val_dice=0.6753 val_iou=0.5194
+[monuseg_E1_A0_s2_clean] epoch 37/40 loss=0.1734 val_dice=0.6752 val_iou=0.5191
+[monuseg_E1_A0_s2_clean] epoch 38/40 loss=0.1713 val_dice=0.6751 val_iou=0.5189
+[monuseg_E1_A0_s2_clean] epoch 39/40 loss=0.1692 val_dice=0.6747 val_iou=0.5184
+[monuseg_E1_A0_s2_clean] epoch 40/40 loss=0.1671 val_dice=0.6742 val_iou=0.5179
+[monuseg_E1_A0_s2_clean] final test_dice=0.7401 test_iou=0.5883 (selected_by=best_val_dice)
+Saved best checkpoint: /storage/nada/ce1/a0/s2/.worktrees/f6fe194810e2acf81ff3e4dea382db9dd5fc31c5/_work/monuseg_E1_A0_s2_clean/repo/outputs/monuseg_E1_A0_s2_clean/checkpoint.pt
+Saved val metrics: /storage/nada/ce1/a0/s2/.worktrees/f6fe194810e2acf81ff3e4dea382db9dd5fc31c5/_work/monuseg_E1_A0_s2_clean/repo/outputs/monuseg_E1_A0_s2_clean/eval_metrics_val.json
+Saved test metrics: /storage/nada/ce1/a0/s2/.worktrees/f6fe194810e2acf81ff3e4dea382db9dd5fc31c5/_work/monuseg_E1_A0_s2_clean/repo/outputs/monuseg_E1_A0_s2_clean/eval_metrics_test.json

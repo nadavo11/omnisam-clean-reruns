@@ -1,0 +1,145 @@
+{
+  "jobs": {
+    "monuseg-e1-a0-s0-clean": {
+      "failure_log_path": null,
+      "history": [
+        {
+          "status": "Succeeded",
+          "ts": "2026-05-26T12:32:18.977420+00:00"
+        }
+      ],
+      "last_checked": "2026-05-26T13:47:25.098508+00:00",
+      "last_raw_excerpt": "Name: monuseg-e1-a0-s0-clean\nNamespace: runai-avidan\nType: Train\nStatus: Succeeded\nDuration: 20m\nGPUs: 1.00\nTotal Requested GPUs: 1.00\nAllocated GPUs: 0.00\nAllocated GPUs memory: 0\nRunning PODs: 0\nPending PODs: 0\nParallelism: 1\nCompletions: 1\nSucceeded PODs: 1\nFailed PODs: 0\nIs Distributed Workload: false\nService URLs: \nCommand Line: runai submit --name monuseg-e1-a0-s0-clean --image pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime --gpu 1 --project avidan --cpu 4 --memory 16G --image-pull-policy IfNotPresent --existing-pvc claimname=storage,path=/storage --working-dir /storage/nada --git-sync source=https://github.com/nadavo11/omnisam-clean-launcher.git,branch=main,target=/storage/nada/ce1/a0/s0 --pod-running-timeout 20m --environment RUNAI_STORAGE_ROOT=/storage/nada --environment RUNAI_CACHE_ROOT=/storage/nada/cache/texture-representations --environment RUNAI_VENV_ROOT=/storage/nada/envs/texture-representations-runai-cu128 --environment RUNAI_ENABLE_PERSISTENT_VENV=1 --environment WANDB_MODE=online --environment HF_TOKEN=REDACTED_HF_TOKEN --environment HUGGINGFACE_HUB_TOKEN=REDACTED_HF_TOKEN --environment WANDB_API_KEY=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 --command -- python /storage/nada/ce1/a0/s0/omnisam-clean-launcher.git/launch_clean_e1.py --config configs/official/method_a0_fpn2.yaml --variant a0_fpn2 --seed 0 --run-name monuseg_E1_A0_s0_clean\n\nPods:\nPOD                         STATUS     TYPE   AGE  NODE\nmonuseg-e1-a0-s0-clean-0-0  SUCCEEDED  TRAIN  36m  hpc-node2/132.66.150.145\n\nEvents: \nSOURCE                                                                     TYPE    AGE  MESSAGE\n--------                                                                   ----    ---  -------\nrunaijob/monuseg-e1-a0-s0-clean                                            Normal  36m  [SuccessfulCreate] Created pod: monuseg-e1-a0-s0-clean-0-0                                                    ",
+      "status": "Succeeded"
+    },
+    "monuseg-e1-a0-s1-clean": {
+      "failure_log_path": null,
+      "history": [
+        {
+          "status": "Running",
+          "ts": "2026-05-26T12:32:18.977420+00:00"
+        },
+        {
+          "status": "Succeeded",
+          "ts": "2026-05-26T13:47:25.098508+00:00"
+        }
+      ],
+      "last_checked": "2026-05-26T13:47:25.098508+00:00",
+      "last_raw_excerpt": "Name: monuseg-e1-a0-s1-clean\nNamespace: runai-avidan\nType: Train\nStatus: Succeeded\nDuration: 23m\nGPUs: 1.00\nTotal Requested GPUs: 1.00\nAllocated GPUs: 0.00\nAllocated GPUs memory: 0\nRunning PODs: 0\nPending PODs: 0\nParallelism: 1\nCompletions: 1\nSucceeded PODs: 1\nFailed PODs: 0\nIs Distributed Workload: false\nService URLs: \nCommand Line: runai submit --name monuseg-e1-a0-s1-clean --image pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime --gpu 1 --project avidan --cpu 4 --memory 16G --image-pull-policy IfNotPresent --existing-pvc claimname=storage,path=/storage --working-dir /storage/nada --git-sync source=https://github.com/nadavo11/omnisam-clean-launcher.git,branch=main,target=/storage/nada/ce1/a0/s1 --pod-running-timeout 20m --environment RUNAI_STORAGE_ROOT=/storage/nada --environment RUNAI_CACHE_ROOT=/storage/nada/cache/texture-representations --environment RUNAI_VENV_ROOT=/storage/nada/envs/texture-representations-runai-cu128 --environment RUNAI_ENABLE_PERSISTENT_VENV=1 --environment WANDB_MODE=online --environment HF_TOKEN=REDACTED_HF_TOKEN --environment HUGGINGFACE_HUB_TOKEN=REDACTED_HF_TOKEN --environment WANDB_API_KEY=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 --command -- python /storage/nada/ce1/a0/s1/omnisam-clean-launcher.git/launch_clean_e1.py --config configs/official/method_a0_fpn2.yaml --variant a0_fpn2 --seed 1 --run-name monuseg_E1_A0_s1_clean\n\nPods:\nPOD                         STATUS     TYPE   AGE  NODE\nmonuseg-e1-a0-s1-clean-0-0  SUCCEEDED  TRAIN  36m  hpc-node3/132.66.150.131\n\nEvents: \nSOURCE                                                                     TYPE    AGE  MESSAGE\n--------                                                                   ----    ---  -------\nrunaijob/monuseg-e1-a0-s1-clean                                            Normal  36m  [SuccessfulCreate] Created pod: monuseg-e1-a0-s1-clean-0-0                                                    ",
+      "status": "Succeeded"
+    },
+    "monuseg-e1-a0-s2-clean": {
+      "failure_log_path": null,
+      "history": [
+        {
+          "status": "Running",
+          "ts": "2026-05-26T12:32:18.977420+00:00"
+        },
+        {
+          "status": "Succeeded",
+          "ts": "2026-05-26T13:47:25.098508+00:00"
+        }
+      ],
+      "last_checked": "2026-05-26T13:47:25.098508+00:00",
+      "last_raw_excerpt": "Name: monuseg-e1-a0-s2-clean\nNamespace: runai-avidan\nType: Train\nStatus: Succeeded\nDuration: 23m\nGPUs: 1.00\nTotal Requested GPUs: 1.00\nAllocated GPUs: 0.00\nAllocated GPUs memory: 0\nRunning PODs: 0\nPending PODs: 0\nParallelism: 1\nCompletions: 1\nSucceeded PODs: 1\nFailed PODs: 0\nIs Distributed Workload: false\nService URLs: \nCommand Line: runai submit --name monuseg-e1-a0-s2-clean --image pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime --gpu 1 --project avidan --cpu 4 --memory 16G --image-pull-policy IfNotPresent --existing-pvc claimname=storage,path=/storage --working-dir /storage/nada --git-sync source=https://github.com/nadavo11/omnisam-clean-launcher.git,branch=main,target=/storage/nada/ce1/a0/s2 --pod-running-timeout 20m --environment RUNAI_STORAGE_ROOT=/storage/nada --environment RUNAI_CACHE_ROOT=/storage/nada/cache/texture-representations --environment RUNAI_VENV_ROOT=/storage/nada/envs/texture-representations-runai-cu128 --environment RUNAI_ENABLE_PERSISTENT_VENV=1 --environment WANDB_MODE=online --environment HF_TOKEN=REDACTED_HF_TOKEN --environment HUGGINGFACE_HUB_TOKEN=REDACTED_HF_TOKEN --environment WANDB_API_KEY=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 --command -- python /storage/nada/ce1/a0/s2/omnisam-clean-launcher.git/launch_clean_e1.py --config configs/official/method_a0_fpn2.yaml --variant a0_fpn2 --seed 2 --run-name monuseg_E1_A0_s2_clean\n\nPods:\nPOD                         STATUS     TYPE   AGE  NODE\nmonuseg-e1-a0-s2-clean-0-0  SUCCEEDED  TRAIN  36m  hpc-node4/132.66.150.125\n\nEvents: \nSOURCE                                                                     TYPE    AGE  MESSAGE\n--------                                                                   ----    ---  -------\nrunaijob/monuseg-e1-a0-s2-clean                                            Normal  36m  [SuccessfulCreate] Created pod: monuseg-e1-a0-s2-clean-0-0                                                    ",
+      "status": "Succeeded"
+    },
+    "monuseg-e1-a2-s0-clean": {
+      "failure_log_path": null,
+      "history": [
+        {
+          "status": "Running",
+          "ts": "2026-05-26T12:32:18.977420+00:00"
+        },
+        {
+          "status": "Succeeded",
+          "ts": "2026-05-26T13:47:25.098508+00:00"
+        }
+      ],
+      "last_checked": "2026-05-26T13:47:25.098508+00:00",
+      "last_raw_excerpt": "Name: monuseg-e1-a2-s0-clean\nNamespace: runai-avidan\nType: Train\nStatus: Succeeded\nDuration: 24m\nGPUs: 1.00\nTotal Requested GPUs: 1.00\nAllocated GPUs: 0.00\nAllocated GPUs memory: 0\nRunning PODs: 0\nPending PODs: 0\nParallelism: 1\nCompletions: 1\nSucceeded PODs: 1\nFailed PODs: 0\nIs Distributed Workload: false\nService URLs: \nCommand Line: runai submit --name monuseg-e1-a2-s0-clean --image pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime --gpu 1 --project avidan --cpu 4 --memory 16G --image-pull-policy IfNotPresent --existing-pvc claimname=storage,path=/storage --working-dir /storage/nada --git-sync source=https://github.com/nadavo11/omnisam-clean-launcher.git,branch=main,target=/storage/nada/ce1/a2/s0 --pod-running-timeout 20m --environment RUNAI_STORAGE_ROOT=/storage/nada --environment RUNAI_CACHE_ROOT=/storage/nada/cache/texture-representations --environment RUNAI_VENV_ROOT=/storage/nada/envs/texture-representations-runai-cu128 --environment RUNAI_ENABLE_PERSISTENT_VENV=1 --environment WANDB_MODE=online --environment HF_TOKEN=REDACTED_HF_TOKEN --environment HUGGINGFACE_HUB_TOKEN=REDACTED_HF_TOKEN --environment WANDB_API_KEY=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 --command -- python /storage/nada/ce1/a2/s0/omnisam-clean-launcher.git/launch_clean_e1.py --config configs/official/method_a2_fpn2_fpn1_refine.yaml --variant a2_fpn2_fpn1_refine --seed 0 --run-name monuseg_E1_A2_s0_clean\n\nPods:\nPOD                         STATUS     TYPE   AGE  NODE\nmonuseg-e1-a2-s0-clean-0-0  SUCCEEDED  TRAIN  37m  hpc-node3/132.66.150.131\n\nEvents: \nSOURCE                                                                     TYPE    AGE  MESSAGE\n--------                                                                   ----    ---  -------\nrunaijob/monuseg-e1-a2-s0-clean                                            Normal  37m  [SuccessfulCreate] Created pod: monuseg-e1-a2-s0-clean-0-0                            ",
+      "status": "Succeeded"
+    },
+    "monuseg-e1-a2-s1-clean": {
+      "failure_log_path": null,
+      "history": [
+        {
+          "status": "Running",
+          "ts": "2026-05-26T12:32:18.977420+00:00"
+        },
+        {
+          "status": "Succeeded",
+          "ts": "2026-05-26T13:47:25.098508+00:00"
+        }
+      ],
+      "last_checked": "2026-05-26T13:47:25.098508+00:00",
+      "last_raw_excerpt": "Name: monuseg-e1-a2-s1-clean\nNamespace: runai-avidan\nType: Train\nStatus: Succeeded\nDuration: 24m\nGPUs: 1.00\nTotal Requested GPUs: 1.00\nAllocated GPUs: 0.00\nAllocated GPUs memory: 0\nRunning PODs: 0\nPending PODs: 0\nParallelism: 1\nCompletions: 1\nSucceeded PODs: 1\nFailed PODs: 0\nIs Distributed Workload: false\nService URLs: \nCommand Line: runai submit --name monuseg-e1-a2-s1-clean --image pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime --gpu 1 --project avidan --cpu 4 --memory 16G --image-pull-policy IfNotPresent --existing-pvc claimname=storage,path=/storage --working-dir /storage/nada --git-sync source=https://github.com/nadavo11/omnisam-clean-launcher.git,branch=main,target=/storage/nada/ce1/a2/s1 --pod-running-timeout 20m --environment RUNAI_STORAGE_ROOT=/storage/nada --environment RUNAI_CACHE_ROOT=/storage/nada/cache/texture-representations --environment RUNAI_VENV_ROOT=/storage/nada/envs/texture-representations-runai-cu128 --environment RUNAI_ENABLE_PERSISTENT_VENV=1 --environment WANDB_MODE=online --environment HF_TOKEN=REDACTED_HF_TOKEN --environment HUGGINGFACE_HUB_TOKEN=REDACTED_HF_TOKEN --environment WANDB_API_KEY=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 --command -- python /storage/nada/ce1/a2/s1/omnisam-clean-launcher.git/launch_clean_e1.py --config configs/official/method_a2_fpn2_fpn1_refine.yaml --variant a2_fpn2_fpn1_refine --seed 1 --run-name monuseg_E1_A2_s1_clean\n\nPods:\nPOD                         STATUS     TYPE   AGE  NODE\nmonuseg-e1-a2-s1-clean-0-0  SUCCEEDED  TRAIN  37m  hpc-node4/132.66.150.125\n\nEvents: \nSOURCE                                                                     TYPE    AGE  MESSAGE\n--------                                                                   ----    ---  -------\nrunaijob/monuseg-e1-a2-s1-clean                                            Normal  37m  [SuccessfulCreate] Created pod: monuseg-e1-a2-s1-clean-0-0                            ",
+      "status": "Succeeded"
+    },
+    "monuseg-e1-a2-s2-clean": {
+      "failure_log_path": null,
+      "history": [
+        {
+          "status": "Running",
+          "ts": "2026-05-26T12:32:18.977420+00:00"
+        },
+        {
+          "status": "Succeeded",
+          "ts": "2026-05-26T13:47:25.098508+00:00"
+        }
+      ],
+      "last_checked": "2026-05-26T13:47:25.098508+00:00",
+      "last_raw_excerpt": "Name: monuseg-e1-a2-s2-clean\nNamespace: runai-avidan\nType: Train\nStatus: Succeeded\nDuration: 25m\nGPUs: 1.00\nTotal Requested GPUs: 1.00\nAllocated GPUs: 0.00\nAllocated GPUs memory: 0\nRunning PODs: 0\nPending PODs: 0\nParallelism: 1\nCompletions: 1\nSucceeded PODs: 1\nFailed PODs: 0\nIs Distributed Workload: false\nService URLs: \nCommand Line: runai submit --name monuseg-e1-a2-s2-clean --image pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime --gpu 1 --project avidan --cpu 4 --memory 16G --image-pull-policy IfNotPresent --existing-pvc claimname=storage,path=/storage --working-dir /storage/nada --git-sync source=https://github.com/nadavo11/omnisam-clean-launcher.git,branch=main,target=/storage/nada/ce1/a2/s2 --pod-running-timeout 20m --environment RUNAI_STORAGE_ROOT=/storage/nada --environment RUNAI_CACHE_ROOT=/storage/nada/cache/texture-representations --environment RUNAI_VENV_ROOT=/storage/nada/envs/texture-representations-runai-cu128 --environment RUNAI_ENABLE_PERSISTENT_VENV=1 --environment WANDB_MODE=online --environment HF_TOKEN=REDACTED_HF_TOKEN --environment HUGGINGFACE_HUB_TOKEN=REDACTED_HF_TOKEN --environment WANDB_API_KEY=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 --command -- python /storage/nada/ce1/a2/s2/omnisam-clean-launcher.git/launch_clean_e1.py --config configs/official/method_a2_fpn2_fpn1_refine.yaml --variant a2_fpn2_fpn1_refine --seed 2 --run-name monuseg_E1_A2_s2_clean\n\nPods:\nPOD                         STATUS     TYPE   AGE  NODE\nmonuseg-e1-a2-s2-clean-0-0  SUCCEEDED  TRAIN  37m  hpc-node3/132.66.150.131\n\nEvents: \nSOURCE                                                                     TYPE    AGE  MESSAGE\n--------                                                                   ----    ---  -------\nrunaijob/monuseg-e1-a2-s2-clean                                            Normal  37m  [SuccessfulCreate] Created pod: monuseg-e1-a2-s2-clean-0-0                            ",
+      "status": "Succeeded"
+    },
+    "monuseg-e1-a3-s0-clean": {
+      "failure_log_path": null,
+      "history": [
+        {
+          "status": "Running",
+          "ts": "2026-05-26T12:32:18.977420+00:00"
+        },
+        {
+          "status": "Succeeded",
+          "ts": "2026-05-26T13:47:25.098508+00:00"
+        }
+      ],
+      "last_checked": "2026-05-26T13:47:25.098508+00:00",
+      "last_raw_excerpt": "Name: monuseg-e1-a3-s0-clean\nNamespace: runai-avidan\nType: Train\nStatus: Succeeded\nDuration: 25m\nGPUs: 1.00\nTotal Requested GPUs: 1.00\nAllocated GPUs: 0.00\nAllocated GPUs memory: 0\nRunning PODs: 0\nPending PODs: 0\nParallelism: 1\nCompletions: 1\nSucceeded PODs: 1\nFailed PODs: 0\nIs Distributed Workload: false\nService URLs: \nCommand Line: runai submit --name monuseg-e1-a3-s0-clean --image pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime --gpu 1 --project avidan --cpu 4 --memory 16G --image-pull-policy IfNotPresent --existing-pvc claimname=storage,path=/storage --working-dir /storage/nada --git-sync source=https://github.com/nadavo11/omnisam-clean-launcher.git,branch=main,target=/storage/nada/ce1/a3/s0 --pod-running-timeout 20m --environment RUNAI_STORAGE_ROOT=/storage/nada --environment RUNAI_CACHE_ROOT=/storage/nada/cache/texture-representations --environment RUNAI_VENV_ROOT=/storage/nada/envs/texture-representations-runai-cu128 --environment RUNAI_ENABLE_PERSISTENT_VENV=1 --environment WANDB_MODE=online --environment HF_TOKEN=REDACTED_HF_TOKEN --environment HUGGINGFACE_HUB_TOKEN=REDACTED_HF_TOKEN --environment WANDB_API_KEY=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 --command -- python /storage/nada/ce1/a3/s0/omnisam-clean-launcher.git/launch_clean_e1.py --config configs/official/method_a3_memory.yaml --variant a3_memory --seed 0 --run-name monuseg_E1_A3_s0_clean\n\nPods:\nPOD                         STATUS     TYPE   AGE  NODE\nmonuseg-e1-a3-s0-clean-0-0  SUCCEEDED  TRAIN  37m  hpc-node4/132.66.150.125\n\nEvents: \nSOURCE                                                                     TYPE    AGE  MESSAGE\n--------                                                                   ----    ---  -------\nrunaijob/monuseg-e1-a3-s0-clean                                            Normal  37m  [SuccessfulCreate] Created pod: monuseg-e1-a3-s0-clean-0-0                                                ",
+      "status": "Succeeded"
+    },
+    "monuseg-e1-a3-s1-clean": {
+      "failure_log_path": null,
+      "history": [
+        {
+          "status": "Running",
+          "ts": "2026-05-26T12:32:18.977420+00:00"
+        },
+        {
+          "status": "Succeeded",
+          "ts": "2026-05-26T13:47:25.098508+00:00"
+        }
+      ],
+      "last_checked": "2026-05-26T13:47:25.098508+00:00",
+      "last_raw_excerpt": "Name: monuseg-e1-a3-s1-clean\nNamespace: runai-avidan\nType: Train\nStatus: Succeeded\nDuration: 24m\nGPUs: 1.00\nTotal Requested GPUs: 1.00\nAllocated GPUs: 0.00\nAllocated GPUs memory: 0\nRunning PODs: 0\nPending PODs: 0\nParallelism: 1\nCompletions: 1\nSucceeded PODs: 1\nFailed PODs: 0\nIs Distributed Workload: false\nService URLs: \nCommand Line: runai submit --name monuseg-e1-a3-s1-clean --image pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime --gpu 1 --project avidan --cpu 4 --memory 16G --image-pull-policy IfNotPresent --existing-pvc claimname=storage,path=/storage --working-dir /storage/nada --git-sync source=https://github.com/nadavo11/omnisam-clean-launcher.git,branch=main,target=/storage/nada/ce1/a3/s1 --pod-running-timeout 20m --environment RUNAI_STORAGE_ROOT=/storage/nada --environment RUNAI_CACHE_ROOT=/storage/nada/cache/texture-representations --environment RUNAI_VENV_ROOT=/storage/nada/envs/texture-representations-runai-cu128 --environment RUNAI_ENABLE_PERSISTENT_VENV=1 --environment WANDB_MODE=online --environment HF_TOKEN=REDACTED_HF_TOKEN --environment HUGGINGFACE_HUB_TOKEN=REDACTED_HF_TOKEN --environment WANDB_API_KEY=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 --command -- python /storage/nada/ce1/a3/s1/omnisam-clean-launcher.git/launch_clean_e1.py --config configs/official/method_a3_memory.yaml --variant a3_memory --seed 1 --run-name monuseg_E1_A3_s1_clean\n\nPods:\nPOD                         STATUS     TYPE   AGE  NODE\nmonuseg-e1-a3-s1-clean-0-0  SUCCEEDED  TRAIN  37m  hpc-node4/132.66.150.125\n\nEvents: \nSOURCE                                                                     TYPE    AGE  MESSAGE\n--------                                                                   ----    ---  -------\nrunaijob/monuseg-e1-a3-s1-clean                                            Normal  37m  [SuccessfulCreate] Created pod: monuseg-e1-a3-s1-clean-0-0                                                ",
+      "status": "Succeeded"
+    },
+    "monuseg-e1-a3-s2-clean": {
+      "failure_log_path": null,
+      "history": [
+        {
+          "status": "Running",
+          "ts": "2026-05-26T12:32:18.977420+00:00"
+        },
+        {
+          "status": "Succeeded",
+          "ts": "2026-05-26T13:47:25.098508+00:00"
+        }
+      ],
+      "last_checked": "2026-05-26T13:47:25.098508+00:00",
+      "last_raw_excerpt": "Name: monuseg-e1-a3-s2-clean\nNamespace: runai-avidan\nType: Train\nStatus: Succeeded\nDuration: 24m\nGPUs: 1.00\nTotal Requested GPUs: 1.00\nAllocated GPUs: 0.00\nAllocated GPUs memory: 0\nRunning PODs: 0\nPending PODs: 0\nParallelism: 1\nCompletions: 1\nSucceeded PODs: 1\nFailed PODs: 0\nIs Distributed Workload: false\nService URLs: \nCommand Line: runai submit --name monuseg-e1-a3-s2-clean --image pytorch/pytorch:2.10.0-cuda12.8-cudnn9-runtime --gpu 1 --project avidan --cpu 4 --memory 16G --image-pull-policy IfNotPresent --existing-pvc claimname=storage,path=/storage --working-dir /storage/nada --git-sync source=https://github.com/nadavo11/omnisam-clean-launcher.git,branch=main,target=/storage/nada/ce1/a3/s2 --pod-running-timeout 20m --environment RUNAI_STORAGE_ROOT=/storage/nada --environment RUNAI_CACHE_ROOT=/storage/nada/cache/texture-representations --environment RUNAI_VENV_ROOT=/storage/nada/envs/texture-representations-runai-cu128 --environment RUNAI_ENABLE_PERSISTENT_VENV=1 --environment WANDB_MODE=online --environment HF_TOKEN=REDACTED_HF_TOKEN --environment HUGGINGFACE_HUB_TOKEN=REDACTED_HF_TOKEN --environment WANDB_API_KEY=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 --command -- python /storage/nada/ce1/a3/s2/omnisam-clean-launcher.git/launch_clean_e1.py --config configs/official/method_a3_memory.yaml --variant a3_memory --seed 2 --run-name monuseg_E1_A3_s2_clean\n\nPods:\nPOD                         STATUS     TYPE   AGE  NODE\nmonuseg-e1-a3-s2-clean-0-0  SUCCEEDED  TRAIN  37m  hpc-node4/132.66.150.125\n\nEvents: \nSOURCE                                                                     TYPE    AGE  MESSAGE\n--------                                                                   ----    ---  -------\nrunaijob/monuseg-e1-a3-s2-clean                                            Normal  37m  [SuccessfulCreate] Created pod: monuseg-e1-a3-s2-clean-0-0                                                ",
+      "status": "Succeeded"
+    }
+  },
+  "updated_at": "2026-05-26T13:47:25.098508+00:00"
+}

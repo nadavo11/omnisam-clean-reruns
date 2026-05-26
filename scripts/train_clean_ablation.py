@@ -208,10 +208,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--limit-train", type=int, default=None)
     parser.add_argument("--limit-val", type=int, default=None)
     parser.add_argument("--limit-test", type=int, default=None)
-    parser.add_argument("--run-test-eval", action="store_true", default=True)
+    parser.add_argument("--run-test-eval", action="store_true", default=False)
     parser.add_argument("--no-run-test-eval", dest="run_test_eval", action="store_false")
+    parser.add_argument(
+        "--allow-premature-test-eval",
+        action="store_true",
+        default=False,
+        help="Override E1 test-eval guard. Never pass this in production E1 runs.",
+    )
     parser.add_argument("--allow-wandb-failure", action="store_true", default=True)
     args = parser.parse_args(argv)
+
+    # E1 split contract guard — E1 must never touch official test IDs.
+    if args.run_test_eval and not args.allow_premature_test_eval:
+        job_type = getattr(args, "wandb_job_type", "") or ""
+        if "E1" in job_type or "E1" in (getattr(args, "run_name", "") or ""):
+            raise SystemExit(
+                "[SPLIT CONTRACT VIOLATION] --run-test-eval is forbidden for E1 jobs. "
+                "E1 must evaluate only on the validation split. "
+                "Pass --allow-premature-test-eval to override (for debug only)."
+            )
 
     set_seed(args.seed)
     method_config = load_yaml_config(args.config)
@@ -320,6 +336,31 @@ def main(argv: list[str] | None = None) -> int:
     probe_sample = (train_samples + val_samples)[0]
     actual_channels = _probe_backbone_channels(extractor, probe_sample, resize_hw)
     print(f"[info] backbone channel probe: {actual_channels}", flush=True)
+
+    # Determine backbone backend for provenance
+    backbone_backend = "unknown"
+    if hasattr(extractor, "_bundle") and extractor._bundle is not None:
+        backbone_backend = extractor._bundle[0] if isinstance(extractor._bundle[0], str) else "official"
+    elif hasattr(extractor, "_using_official_backend"):
+        backbone_backend = "official" if extractor._using_official_backend else "transformers_hf_fallback"
+
+    feature_shapes = {
+        "backbone_model_id": str(config.get("sam", {}).get("model_id", "unknown")),
+        "backbone_backend": backbone_backend,
+        "paper_headline_safe": backbone_backend == "official",
+        "f2_channels": actual_channels.get("f2_channels"),
+        "f1_channels": actual_channels.get("f1_channels"),
+        "f0_channels": actual_channels.get("f0_channels"),
+        "expected_paper_channels": {"f2_channels": 256, "f1_channels": 64, "f0_channels": 32},
+        "channel_parity_ok": (
+            actual_channels.get("f2_channels") == 256
+            and actual_channels.get("f1_channels") == 64
+            and actual_channels.get("f0_channels") == 32
+        ),
+    }
+    (out_dir / "feature_shapes.json").write_text(json.dumps(feature_shapes, indent=2, sort_keys=True))
+    print(f"[info] feature_shapes: f2={actual_channels.get('f2_channels')} f1={actual_channels.get('f1_channels')} f0={actual_channels.get('f0_channels')} backend={backbone_backend}", flush=True)
+
     head = _build_head(variant, channels=actual_channels).to(device)
     training_cfg = config.get("training", {})
     optimizer = torch.optim.AdamW(
@@ -348,6 +389,12 @@ def main(argv: list[str] | None = None) -> int:
                 "fixed_sample_ids_path": str(fixed_sample_ids_dst.resolve()),
                 "output_dir": str(out_dir.resolve()),
                 "eval_split": "val",
+                "backbone_backend": feature_shapes["backbone_backend"],
+                "paper_headline_safe": feature_shapes["paper_headline_safe"],
+                "channel_parity_ok": feature_shapes["channel_parity_ok"],
+                "f2_channels": feature_shapes["f2_channels"],
+                "f1_channels": feature_shapes["f1_channels"],
+                "f0_channels": feature_shapes["f0_channels"],
             },
         )
         wandb_url = str(wandb_run.url)

@@ -1,0 +1,33 @@
+dataset:
+  name: monuseg
+  root_or_name: RationAI/MoNuSeg
+  train_split: train
+  eval_split: test
+  resize_before_sam:
+    height: 512
+    width: 512
+  augmentation_policy: none
+
+sam:
+  model_id: facebook/sam3
+  frozen: true
+  use_prompt_encoder: false
+  use_mask_decoder: false
+  feature_levels: [fpn_2, fpn_1, fpn_0]
+
+training:
+  stage1_epochs: 40
+  stage2_epochs: 0
+  optimizer: AdamW
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  batch_size: 1
+
+evaluation:
+  split: test
+  threshold: 0.5
+
+guards:
+  fail_if_sam_trainable: true
+  fail_if_prompt_encoder_used: true
+  fail_if_mask_decoder_used: true

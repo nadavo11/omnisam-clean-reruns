@@ -1,0 +1,80 @@
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+SAM-3 extractor: using transformers.AutoModel fallback — preprocessing differs from the official SAM-3 package. Outputs are NOT paper-equivalent. Set paper_headline_safe=false.
+wandb: updating run metadata
+wandb: uploading media/images/val/sample_segmentation_39_7604dc3ceff6e1232f1d.png; uploading output.log; uploading wandb-summary.json; uploading config.yaml
+wandb: uploading media/images/val/sample_segmentation_39_7604dc3ceff6e1232f1d.png
+wandb: 
+wandb: Run history:
+wandb:      epoch ▁▁▁▂▂▂▂▂▂▃▃▃▃▃▄▄▄▄▄▄▅▅▅▅▅▅▆▆▆▆▆▇▇▇▇▇▇███
+wandb: train/loss █▅▄▃▃▃▃▃▃▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:   train/lr ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:   val/dice ▁▆▇█████████▇▇▇▇▇▇▇▇▆▆▆▆▆▆▆▆▅▅▅▅▅▅▅▅▅▅▅▅
+wandb:    val/iou ▁▆▇█████████▇▇▇▇▇▇▇▇▇▆▆▆▆▆▆▆▆▆▆▆▅▅▅▅▅▅▅▅
+wandb: 
+wandb: Run summary:
+wandb:              checkpoint_path /storage/nada/ce1/a0...
+wandb:            checkpoint_sha256 db9822ce01afa82b2ca6...
+wandb:                  config_path /storage/nada/ce1/a0...
+wandb:                        epoch 40
+wandb:                   eval_split val
+wandb:        fixed_sample_ids_path /storage/nada/ce1/a0...
+wandb:   provenance/checkpoint_path /storage/nada/ce1/a0...
+wandb: provenance/checkpoint_sha256 db9822ce01afa82b2ca6...
+wandb:       provenance/config_path /storage/nada/ce1/a0...
+wandb:        provenance/eval_split val
+wandb:                           +6 ...
+wandb: 
+wandb: 🚀 View run monuseg_E1_A0_s0_clean at: https://wandb.ai/nadavoteam/frozen-sam-readout/runs/8tfcdi95
+wandb: ⭐️ View project at: https://wandb.ai/nadavoteam/frozen-sam-readout
+wandb: Synced 5 W&B file(s), 40 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260526_121101-8tfcdi95/logs
+[monuseg_E1_A0_s0_clean] epoch 1/40 loss=0.4783 val_dice=0.6563 val_iou=0.4947
+[monuseg_E1_A0_s0_clean] epoch 2/40 loss=0.3313 val_dice=0.6861 val_iou=0.5277
+[monuseg_E1_A0_s0_clean] epoch 3/40 loss=0.2961 val_dice=0.6961 val_iou=0.5395
+[monuseg_E1_A0_s0_clean] epoch 4/40 loss=0.2768 val_dice=0.6988 val_iou=0.5427
+[monuseg_E1_A0_s0_clean] epoch 5/40 loss=0.2644 val_dice=0.6996 val_iou=0.5435
+[monuseg_E1_A0_s0_clean] epoch 6/40 loss=0.2556 val_dice=0.6997 val_iou=0.5435
+[monuseg_E1_A0_s0_clean] epoch 7/40 loss=0.2488 val_dice=0.6994 val_iou=0.5431
+[monuseg_E1_A0_s0_clean] epoch 8/40 loss=0.2433 val_dice=0.6988 val_iou=0.5425
+[monuseg_E1_A0_s0_clean] epoch 9/40 loss=0.2387 val_dice=0.6982 val_iou=0.5417
+[monuseg_E1_A0_s0_clean] epoch 10/40 loss=0.2347 val_dice=0.6976 val_iou=0.5411
+[monuseg_E1_A0_s0_clean] epoch 11/40 loss=0.2311 val_dice=0.6972 val_iou=0.5406
+[monuseg_E1_A0_s0_clean] epoch 12/40 loss=0.2280 val_dice=0.6967 val_iou=0.5401
+[monuseg_E1_A0_s0_clean] epoch 13/40 loss=0.2251 val_dice=0.6962 val_iou=0.5396
+[monuseg_E1_A0_s0_clean] epoch 14/40 loss=0.2224 val_dice=0.6956 val_iou=0.5391
+[monuseg_E1_A0_s0_clean] epoch 15/40 loss=0.2198 val_dice=0.6951 val_iou=0.5385
+[monuseg_E1_A0_s0_clean] epoch 16/40 loss=0.2174 val_dice=0.6943 val_iou=0.5377
+[monuseg_E1_A0_s0_clean] epoch 17/40 loss=0.2151 val_dice=0.6935 val_iou=0.5370
+[monuseg_E1_A0_s0_clean] epoch 18/40 loss=0.2129 val_dice=0.6928 val_iou=0.5362
+[monuseg_E1_A0_s0_clean] epoch 19/40 loss=0.2108 val_dice=0.6918 val_iou=0.5352
+[monuseg_E1_A0_s0_clean] epoch 20/40 loss=0.2087 val_dice=0.6909 val_iou=0.5344
+[monuseg_E1_A0_s0_clean] epoch 21/40 loss=0.2066 val_dice=0.6900 val_iou=0.5335
+[monuseg_E1_A0_s0_clean] epoch 22/40 loss=0.2046 val_dice=0.6893 val_iou=0.5328
+[monuseg_E1_A0_s0_clean] epoch 23/40 loss=0.2027 val_dice=0.6882 val_iou=0.5318
+[monuseg_E1_A0_s0_clean] epoch 24/40 loss=0.2007 val_dice=0.6874 val_iou=0.5309
+[monuseg_E1_A0_s0_clean] epoch 25/40 loss=0.1988 val_dice=0.6866 val_iou=0.5302
+[monuseg_E1_A0_s0_clean] epoch 26/40 loss=0.1969 val_dice=0.6859 val_iou=0.5295
+[monuseg_E1_A0_s0_clean] epoch 27/40 loss=0.1950 val_dice=0.6853 val_iou=0.5289
+[monuseg_E1_A0_s0_clean] epoch 28/40 loss=0.1931 val_dice=0.6845 val_iou=0.5281
+[monuseg_E1_A0_s0_clean] epoch 29/40 loss=0.1912 val_dice=0.6839 val_iou=0.5274
+[monuseg_E1_A0_s0_clean] epoch 30/40 loss=0.1893 val_dice=0.6834 val_iou=0.5270
+[monuseg_E1_A0_s0_clean] epoch 31/40 loss=0.1874 val_dice=0.6828 val_iou=0.5263
+[monuseg_E1_A0_s0_clean] epoch 32/40 loss=0.1854 val_dice=0.6826 val_iou=0.5261
+[monuseg_E1_A0_s0_clean] epoch 33/40 loss=0.1835 val_dice=0.6822 val_iou=0.5257
+[monuseg_E1_A0_s0_clean] epoch 34/40 loss=0.1815 val_dice=0.6818 val_iou=0.5253
+[monuseg_E1_A0_s0_clean] epoch 35/40 loss=0.1796 val_dice=0.6816 val_iou=0.5249
+[monuseg_E1_A0_s0_clean] epoch 36/40 loss=0.1776 val_dice=0.6814 val_iou=0.5248
+[monuseg_E1_A0_s0_clean] epoch 37/40 loss=0.1755 val_dice=0.6816 val_iou=0.5249
+[monuseg_E1_A0_s0_clean] epoch 38/40 loss=0.1734 val_dice=0.6818 val_iou=0.5250
+[monuseg_E1_A0_s0_clean] epoch 39/40 loss=0.1714 val_dice=0.6819 val_iou=0.5250
+[monuseg_E1_A0_s0_clean] epoch 40/40 loss=0.1692 val_dice=0.6818 val_iou=0.5248
+Saved best checkpoint: /storage/nada/ce1/a0/s0/.worktrees/f6fe194810e2acf81ff3e4dea382db9dd5fc31c5/_work/monuseg_E1_A0_s0_clean/repo/outputs/monuseg_E1_A0_s0_clean/checkpoint.pt
+Saved val metrics: /storage/nada/ce1/a0/s0/.worktrees/f6fe194810e2acf81ff3e4dea382db9dd5fc31c5/_work/monuseg_E1_A0_s0_clean/repo/outputs/monuseg_E1_A0_s0_clean/eval_metrics_val.json
+Saved test stub: /storage/nada/ce1/a0/s0/.worktrees/f6fe194810e2acf81ff3e4dea382db9dd5fc31c5/_work/monuseg_E1_A0_s0_clean/repo/outputs/monuseg_E1_A0_s0_clean/eval_metrics_test.json

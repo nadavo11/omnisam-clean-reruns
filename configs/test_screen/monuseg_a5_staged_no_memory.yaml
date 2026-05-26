@@ -1,0 +1,36 @@
+dataset:
+  name: monuseg
+  root_or_name: RationAI/MoNuSeg
+  train_split: train
+  eval_split: test
+  resize_before_sam:
+    height: 512
+    width: 512
+  augmentation_policy: none
+
+sam:
+  model_id: facebook/sam3
+  frozen: true
+  use_prompt_encoder: false
+  use_mask_decoder: false
+
+training:
+  stage1_epochs: 40   # A2 (fpn_2+fpn_1 refine, no memory) trained alone
+  stage2_epochs: 40   # F0 residual enabled, A2 unfrozen, joint training
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+
+evaluation:
+  split: test
+  threshold: 0.5
+
+guards:
+  fail_if_sam_trainable: true
+  fail_if_prompt_encoder_used: true
+  fail_if_mask_decoder_used: true
+
+model:
+  variant: final_staged_a2
+  decoder_dim: 128
+  alpha_init: 0.05
+  final_layer_zero_init: true
