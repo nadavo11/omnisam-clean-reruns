@@ -1,0 +1,60 @@
+meta:
+  human_name: all_refine_mem_gated_but_no_zero_init
+  description: >
+    C2 mechanism ablation — same as v3 all-refine-memory with scheduled gates,
+    but f0_final projection is NOT zero-initialized (normal Kaiming init).
+    Enabled by zero_init_f0_final: false in model config.
+    Purpose: test whether zero-init of the F0 residual projection is important
+    for training stability, beyond what the scheduled gating provides.
+
+dataset:
+  name: monuseg
+  root_or_name: RationAI/MoNuSeg
+  train_split: train
+  eval_split: test
+  resize_before_sam:
+    height: 512
+    width: 512
+  augmentation_policy: autosam_dense_v1
+
+sam:
+  model_id: facebook/sam3
+  frozen: true
+  use_prompt_encoder: false
+  use_mask_decoder: false
+
+training:
+  total_epochs: 80
+  eval_every: 5
+  lr: 1.0e-4
+  lr_min: 1.0e-6
+  weight_decay: 1.0e-4
+  lr_schedule: cosine
+
+evaluation:
+  split: test
+  threshold: 0.5
+
+guards:
+  fail_if_sam_trainable: true
+  fail_if_prompt_encoder_used: true
+  fail_if_mask_decoder_used: true
+
+model:
+  variant: gated_all_refine_mem
+  decoder_dim: 128
+  memory_tokens: 4
+  alpha_init: 0.05
+  zero_init_f0_final: false
+
+warmup:
+  gates:
+    gate_mem_coarse:
+      warmup_start: 6
+      warmup_end: 10
+    gate_mem_f1:
+      warmup_start: 6
+      warmup_end: 15
+    gate_f0:
+      warmup_start: 21
+      warmup_end: 30

@@ -82,6 +82,7 @@ class GatedWarmupHead(nn.Module):
         decoder_dim: int = 128,
         memory_tokens: int = 4,
         alpha_init: float = 0.05,
+        zero_init_f0_final: bool = True,
     ) -> None:
         super().__init__()
         self.proj = nn.Conv2d(f2_channels, decoder_dim, kernel_size=1)
@@ -103,8 +104,9 @@ class GatedWarmupHead(nn.Module):
             ConvBNReLU(decoder_dim, decoder_dim),
         )
         self.f0_final = nn.Conv2d(decoder_dim, 1, kernel_size=1)
-        nn.init.zeros_(self.f0_final.weight)
-        nn.init.zeros_(self.f0_final.bias)
+        if zero_init_f0_final:
+            nn.init.zeros_(self.f0_final.weight)
+            nn.init.zeros_(self.f0_final.bias)
         alpha_clamped = float(min(max(alpha_init, 1e-4), 1.0 - 1e-4))
         self.raw_alpha_f0 = nn.Parameter(
             torch.tensor(math.log(alpha_clamped / (1.0 - alpha_clamped)))
@@ -204,8 +206,12 @@ class GatedAllRefineHead(nn.Module):
         decoder_dim: int = 128,
         memory_tokens: int = 4,
         alpha_init: float = 0.05,
+        zero_init_f0_final: bool = True,
+        use_f0_memory: bool = True,
     ) -> None:
         super().__init__()
+        self._use_f0_memory = use_f0_memory
+
         # Coarse path (fpn_2)
         self.proj = nn.Conv2d(f2_channels, decoder_dim, kernel_size=1)
         self.memory_coarse = MemoryAttentionBlock(
@@ -232,17 +238,21 @@ class GatedAllRefineHead(nn.Module):
 
         # F0 fine-scale residual path
         self.f0_proj = nn.Conv2d(f0_channels, decoder_dim, kernel_size=1)
-        self.memory_f0 = MemoryAttentionBlock(
-            embed_dim=decoder_dim,
-            num_memory_tokens=memory_tokens,
-        )
+        if use_f0_memory:
+            self.memory_f0: nn.Module | None = MemoryAttentionBlock(
+                embed_dim=decoder_dim,
+                num_memory_tokens=memory_tokens,
+            )
+        else:
+            self.memory_f0 = None
         self.f0_fuse = nn.Sequential(
             ConvBNReLU(decoder_dim + 1, decoder_dim),
             ConvBNReLU(decoder_dim, decoder_dim),
         )
         self.f0_final = nn.Conv2d(decoder_dim, 1, kernel_size=1)
-        nn.init.zeros_(self.f0_final.weight)
-        nn.init.zeros_(self.f0_final.bias)
+        if zero_init_f0_final:
+            nn.init.zeros_(self.f0_final.weight)
+            nn.init.zeros_(self.f0_final.bias)
         alpha_clamped = float(min(max(alpha_init, 1e-4), 1.0 - 1e-4))
         self.raw_alpha_f0 = nn.Parameter(
             torch.tensor(math.log(alpha_clamped / (1.0 - alpha_clamped)))
@@ -296,15 +306,16 @@ class GatedAllRefineHead(nn.Module):
         z_f1 = torch.cat([f1_feat, coarse_up], dim=1)
         l_a3 = self.f1_head(self.f1_fuse(z_f1))
 
-        # F0 residual with F0-level memory (both controlled by gate_f0)
+        # F0 residual; F0-level memory optional (controlled by _use_f0_memory)
         gate_f0 = float(self.gate_f0)
         if gate_f0 > 0.0 and "fpn_0" in pyramid:
             fpn0 = pyramid["fpn_0"]
             h0, w0 = fpn0.shape[-2:]
             l_a3_up = upsample_to(l_a3, (h0, w0))
             f0_feat = self.f0_proj(fpn0)
-            f0_mem = self.memory_f0(f0_feat)
-            f0_feat = f0_feat + self.gate_f0 * (f0_mem - f0_feat)
+            if self._use_f0_memory and self.memory_f0 is not None:
+                f0_mem = self.memory_f0(f0_feat)
+                f0_feat = f0_feat + self.gate_f0 * (f0_mem - f0_feat)
             z_f0 = torch.cat([f0_feat, l_a3_up], dim=1)
             residual = self.f0_final(self.f0_fuse(z_f0))
             alpha = torch.sigmoid(self.raw_alpha_f0)

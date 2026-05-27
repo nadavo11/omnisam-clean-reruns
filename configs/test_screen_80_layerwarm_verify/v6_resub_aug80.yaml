@@ -1,0 +1,56 @@
+meta:
+  human_name: full_A3M4_F0_from_epoch0_gated_aug80
+  description: >
+    v6 resub — full A3M4+F0 model from epoch 0, all branches gated (not hard-staged).
+    A2 path active immediately. Memory gate ramps ep 6-20 (longer warmup than v1).
+    F0 gate ramps ep 21-30. Separates "hard staging" from "smooth gating":
+    tests whether hard staged construction is necessary.
+    Clean resubmission after stuck-Pending kill (2026-05-27).
+
+dataset:
+  name: monuseg
+  root_or_name: RationAI/MoNuSeg
+  train_split: train
+  eval_split: test
+  resize_before_sam:
+    height: 512
+    width: 512
+  augmentation_policy: autosam_dense_v1
+
+sam:
+  model_id: facebook/sam3
+  frozen: true
+  use_prompt_encoder: false
+  use_mask_decoder: false
+
+training:
+  total_epochs: 80
+  eval_every: 5
+  lr: 1.0e-4
+  lr_min: 1.0e-6
+  weight_decay: 1.0e-4
+  lr_schedule: cosine
+
+evaluation:
+  split: test
+  threshold: 0.5
+
+guards:
+  fail_if_sam_trainable: true
+  fail_if_prompt_encoder_used: true
+  fail_if_mask_decoder_used: true
+
+model:
+  variant: gated_a3_f0_warmup
+  decoder_dim: 128
+  memory_tokens: 4
+  alpha_init: 0.05
+
+warmup:
+  gates:
+    gate_memory:
+      warmup_start: 6
+      warmup_end: 20
+    gate_f0:
+      warmup_start: 21
+      warmup_end: 30

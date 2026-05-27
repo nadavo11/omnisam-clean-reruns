@@ -1,0 +1,62 @@
+meta:
+  human_name: memory_mid_only_F0_no_memory
+  description: >
+    C3 mechanism ablation — memory at coarse and F1 (same as v1/v3 coarse+mid),
+    F0 residual branch active and warmed (gate_f0 ep21-30), but NO memory at F0.
+    Enabled by use_f0_memory: false in model config (memory_f0 module not allocated).
+    Purpose: test whether the extra gain in v3 over v1 comes specifically from
+    memory at the F0 refinement level, vs just the F0 residual itself.
+    Expected: similar to v1 (if F0 memory is key to v3 gain) or similar to v3
+    (if F0 memory is incidental).
+
+dataset:
+  name: monuseg
+  root_or_name: RationAI/MoNuSeg
+  train_split: train
+  eval_split: test
+  resize_before_sam:
+    height: 512
+    width: 512
+  augmentation_policy: autosam_dense_v1
+
+sam:
+  model_id: facebook/sam3
+  frozen: true
+  use_prompt_encoder: false
+  use_mask_decoder: false
+
+training:
+  total_epochs: 80
+  eval_every: 5
+  lr: 1.0e-4
+  lr_min: 1.0e-6
+  weight_decay: 1.0e-4
+  lr_schedule: cosine
+
+evaluation:
+  split: test
+  threshold: 0.5
+
+guards:
+  fail_if_sam_trainable: true
+  fail_if_prompt_encoder_used: true
+  fail_if_mask_decoder_used: true
+
+model:
+  variant: gated_all_refine_mem
+  decoder_dim: 128
+  memory_tokens: 4
+  alpha_init: 0.05
+  use_f0_memory: false
+
+warmup:
+  gates:
+    gate_mem_coarse:
+      warmup_start: 6
+      warmup_end: 10
+    gate_mem_f1:
+      warmup_start: 6
+      warmup_end: 15
+    gate_f0:
+      warmup_start: 21
+      warmup_end: 30

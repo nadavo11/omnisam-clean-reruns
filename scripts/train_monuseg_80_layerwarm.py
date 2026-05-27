@@ -172,9 +172,12 @@ def _build_head(variant: str, channels: dict, model_cfg: dict) -> torch.nn.Modul
     if variant == "gated_a3_f0_warmup":
         kwargs["memory_tokens"] = memory_tokens
         kwargs["alpha_init"] = alpha_init
+        kwargs["zero_init_f0_final"] = bool(model_cfg.get("zero_init_f0_final", True))
     elif variant == "gated_all_refine_mem":
         kwargs["memory_tokens"] = memory_tokens
         kwargs["alpha_init"] = alpha_init
+        kwargs["zero_init_f0_final"] = bool(model_cfg.get("zero_init_f0_final", True))
+        kwargs["use_f0_memory"] = bool(model_cfg.get("use_f0_memory", True))
     elif variant == "a0_fpn2":
         kwargs.pop("f1_channels", None)
         kwargs.pop("f0_channels", None)
