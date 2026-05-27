@@ -2,6 +2,7 @@ from .a0_fpn2 import A0Fpn2Head
 from .a2_fpn2_fpn1_refine import A2Fpn2Fpn1RefineHead
 from .a3_memory import A3MemoryHead
 from .a5_f0_residual import A5F0ResidualHead
+from .gated_layerwarm import GatedAllRefineHead, GatedWarmupHead
 from .staged_readout import StagedA2ReadoutHead, StagedMultiscaleReadoutHead
 
 __all__ = [
@@ -9,6 +10,8 @@ __all__ = [
     "A2Fpn2Fpn1RefineHead",
     "A3MemoryHead",
     "A5F0ResidualHead",
+    "GatedAllRefineHead",
+    "GatedWarmupHead",
     "StagedA2ReadoutHead",
     "StagedMultiscaleReadoutHead",
 ]

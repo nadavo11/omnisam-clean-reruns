@@ -1,0 +1,57 @@
+meta:
+  human_name: all_refinement_layers_memory_aug80
+  description: >
+    Variant 3 — memory at every refinement scale: coarse (gate_mem_coarse ep 6-10),
+    F1 mid-scale (gate_mem_f1 ep 6-15), F0 fine-scale (gate_f0 ep 21-30).
+    Tests whether memory context at all scales improves over single-level memory.
+
+dataset:
+  name: monuseg
+  root_or_name: RationAI/MoNuSeg
+  train_split: train
+  eval_split: test
+  resize_before_sam:
+    height: 512
+    width: 512
+  augmentation_policy: autosam_dense_v1
+
+sam:
+  model_id: facebook/sam3
+  frozen: true
+  use_prompt_encoder: false
+  use_mask_decoder: false
+
+training:
+  total_epochs: 80
+  eval_every: 5
+  lr: 1.0e-4
+  lr_min: 1.0e-6
+  weight_decay: 1.0e-4
+  lr_schedule: cosine
+
+evaluation:
+  split: test
+  threshold: 0.5
+
+guards:
+  fail_if_sam_trainable: true
+  fail_if_prompt_encoder_used: true
+  fail_if_mask_decoder_used: true
+
+model:
+  variant: gated_all_refine_mem
+  decoder_dim: 128
+  memory_tokens: 4
+  alpha_init: 0.05
+
+warmup:
+  gates:
+    gate_mem_coarse:
+      warmup_start: 6
+      warmup_end: 10
+    gate_mem_f1:
+      warmup_start: 6
+      warmup_end: 15
+    gate_f0:
+      warmup_start: 21
+      warmup_end: 30

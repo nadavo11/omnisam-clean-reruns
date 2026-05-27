@@ -1,0 +1,54 @@
+meta:
+  human_name: A3M4_no_F0_aug80
+  description: >
+    Variant 5 — A3M4 only, no F0 residual (gate_f0 always 0). Memory warmed
+    in ep 6-10. Strong no-F0 control: determines whether F0 is still useful
+    in the long augmented 80-epoch regime.
+
+dataset:
+  name: monuseg
+  root_or_name: RationAI/MoNuSeg
+  train_split: train
+  eval_split: test
+  resize_before_sam:
+    height: 512
+    width: 512
+  augmentation_policy: autosam_dense_v1
+
+sam:
+  model_id: facebook/sam3
+  frozen: true
+  use_prompt_encoder: false
+  use_mask_decoder: false
+
+training:
+  total_epochs: 80
+  eval_every: 5
+  lr: 1.0e-4
+  lr_min: 1.0e-6
+  weight_decay: 1.0e-4
+  lr_schedule: cosine
+
+evaluation:
+  split: test
+  threshold: 0.5
+
+guards:
+  fail_if_sam_trainable: true
+  fail_if_prompt_encoder_used: true
+  fail_if_mask_decoder_used: true
+
+model:
+  variant: gated_a3_f0_warmup
+  decoder_dim: 128
+  memory_tokens: 4
+  alpha_init: 0.05
+
+warmup:
+  gates:
+    gate_memory:
+      warmup_start: 6
+      warmup_end: 10
+    gate_f0:
+      warmup_start: 999
+      warmup_end: 999
