@@ -75,6 +75,19 @@ def pvc_output(variant_key: str, seed: int) -> str:
     return f"/storage/nada/test_screen_80/{variant_key}/s{seed}"
 
 
+# Short alphanumeric codes for sync target paths (must keep container names ≤ 63 chars)
+# Container name pattern: git-sync-git--storage-nada-{sync_target_suffix}
+# Budget: 63 - len("git-sync-git--storage-nada-") = 63 - 27 = 36 chars for suffix
+_VARIANT_SHORT: dict[str, str] = {
+    "v1_progressive":    "ts80l/v1p",
+    "v2_legacy_staged40": "ts80l/v2s",
+    "v3_all_refine_mem": "ts80l/v3r",
+    "v4_no_memory":      "ts80l/v4n",
+    "v5_a3m4_no_f0":     "ts80l/v5a",
+    "v6_onestage_gated": "ts80l/v6g",
+}
+
+
 def submit_job(
     variant_key: str,
     seed: int,
@@ -86,7 +99,8 @@ def submit_job(
     job_name = f"{base_job_name}-s{seed}" + ("-smoke" if smoke else "")
     run_name = job_name.replace("-", "_")
     output_dir = pvc_output(variant_key + ("/smoke" if smoke else ""), seed)
-    sync_target = f"/storage/nada/test_screen_80_launcher/{variant_key}/s{seed}"
+    short = _VARIANT_SHORT[variant_key]
+    sync_target = f"/storage/nada/{short}/s{seed}"
     repo_dir = f"{sync_target}/omnisam-clean-launcher.git"
 
     inner_cmd = [
