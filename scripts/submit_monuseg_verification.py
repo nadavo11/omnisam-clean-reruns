@@ -68,38 +68,38 @@ BLOCKS: dict[str, tuple[str, str, str, str]] = {
     "a": (
         "all_refinement_layers_memory_aug80_fresh345",
         "configs/test_screen_80_layerwarm_verify/block_a_v3_fresh_345.yaml",
-        "monuseg-verA-v3",
-        "verA/v3a",
+        "monuseg-vera-v3",
+        "vera/v3a",
     ),
     "b": (
         "official_candidate_gated_all_refine_mem_F0_aug80_canonical",
         "configs/test_screen_80_layerwarm_verify/block_b_canonical_gated_all_refine_mem.yaml",
-        "monuseg-verB-v3",
-        "verB/v3b",
+        "monuseg-verb-v3",
+        "verb/v3b",
     ),
     "c1": (
         "all_refine_mem_abrupt_F0_no_gate",
         "configs/test_screen_80_layerwarm_verify/block_c1_abrupt_f0_aug80.yaml",
         "monuseg-abl-c1",
-        "ablC/c1",
+        "ablc/c1",
     ),
     "c2": (
         "all_refine_mem_gated_but_no_zero_init",
         "configs/test_screen_80_layerwarm_verify/block_c2_gated_no_zero_init_aug80.yaml",
         "monuseg-abl-c2",
-        "ablC/c2",
+        "ablc/c2",
     ),
     "c3": (
         "memory_mid_only_F0_no_memory",
         "configs/test_screen_80_layerwarm_verify/block_c3_f0_no_f0memory_aug80.yaml",
         "monuseg-abl-c3",
-        "ablC/c3",
+        "ablc/c3",
     ),
     "c4": (
         "memory_F0_only_mid_no_memory",
         "configs/test_screen_80_layerwarm_verify/block_c4_f0memory_only_aug80.yaml",
         "monuseg-abl-c4",
-        "ablC/c4",
+        "ablc/c4",
     ),
 }
 
