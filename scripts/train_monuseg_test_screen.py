@@ -43,6 +43,7 @@ from frozen_sam_readout.evaluation.official_eval import run_official_eval
 from frozen_sam_readout.models.registry import build_head
 from frozen_sam_readout.sam import build_frozen_sam_pyramid_extractor
 from frozen_sam_readout.training import bce_dice_loss, load_checkpoint, save_checkpoint, train_one_epoch
+from frozen_sam_readout.training.augmentations import apply_augmentation, describe_augmentation_policy
 from frozen_sam_readout.utils import load_yaml_config, set_seed, write_run_manifest
 from frozen_sam_readout.utils.config import assert_monuseg_no_val
 from frozen_sam_readout.visualization import compose_strip, binary_error_map, render_gt_overlay, render_single_mask_overlay
@@ -66,8 +67,18 @@ def _resize_image(image: Image.Image, resize_hw: tuple[int, int] | None) -> Imag
     return image.resize((resize_hw[1], resize_hw[0]), Image.BILINEAR)
 
 
-def _streaming_feature_iter(extractor, samples: Iterable, resize_hw) -> Iterator[dict]:
+def _streaming_feature_iter(
+    extractor,
+    samples: Iterable,
+    resize_hw,
+    *,
+    aug_policy: str = "none",
+    rng: "np.random.Generator | None" = None,
+) -> Iterator[dict]:
     for sample in samples:
+        if aug_policy != "none" and rng is not None:
+            # Augmentation applied to PIL image + mask BEFORE SAM feature extraction
+            sample = apply_augmentation(sample, rng=rng, policy=aug_policy)
         img = _resize_image(sample.image, resize_hw)
         _, pyramid_np = extractor.extract_sam_pyramid(img)
         pyramid_t = {
@@ -189,6 +200,9 @@ def main(argv: list[str] | None = None) -> int:
     total_epochs = stage1_epochs + stage2_epochs
     is_two_stage = variant in _TWO_STAGE_VARIANTS and stage2_epochs > 0
 
+    aug_policy = str(config.get("dataset", {}).get("augmentation_policy", "none")).lower()
+    aug_rng = np.random.default_rng(int(args.seed))  # seeded separately from model init
+
     out_dir = Path(args.output_dir or f"outputs/{args.run_name}")
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "eval").mkdir(exist_ok=True)
@@ -306,6 +320,8 @@ def main(argv: list[str] | None = None) -> int:
                 "f0_channels": feature_shapes["f0_channels"],
                 "stage1_epochs": stage1_epochs,
                 "stage2_epochs": stage2_epochs,
+                "augmentation_policy": aug_policy,
+                "augmentation_description": describe_augmentation_policy(aug_policy),
                 "train_count": len(train_samples),
                 "test_count": len(test_samples),
                 "config_path": str(Path(args.config).resolve()),
@@ -346,6 +362,8 @@ def main(argv: list[str] | None = None) -> int:
     final_epoch_iou = float("nan")
     best_ckpt = out_dir / "checkpoint.pt"
     latest_ckpt = out_dir / "checkpoint_last.pt"
+    per_epoch_csv = out_dir / "eval" / "per_epoch_metrics.csv"
+    per_epoch_csv.write_text("epoch,stage,train_loss,lr,test_dice,test_iou,is_best\n")
 
     for epoch in range(1, total_epochs + 1):
         # Two-stage transition
@@ -360,7 +378,10 @@ def main(argv: list[str] | None = None) -> int:
             )
             scheduler = _make_scheduler(optimizer, stage2_epochs)
 
-        train_stream = _streaming_feature_iter(extractor, train_samples, resize_hw)
+        train_stream = _streaming_feature_iter(
+            extractor, train_samples, resize_hw,
+            aug_policy=aug_policy, rng=aug_rng,
+        )
         train_stats = train_one_epoch(
             model=head, dataset=train_stream, optimizer=optimizer,
             loss_fn=bce_dice_loss, device=device,
@@ -385,6 +406,10 @@ def main(argv: list[str] | None = None) -> int:
         final_epoch_iou = test_iou
         if scheduler is not None:
             scheduler.step()
+
+        # Append to per-epoch CSV (no buffering — readable mid-run)
+        with per_epoch_csv.open("a") as _f:
+            _f.write(f"{epoch},{stage_label},{train_stats['loss']:.6f},{lr:.8f},{test_dice:.6f},{test_iou:.6f},{int(epoch == best_test_epoch)}\n")
 
         # Fixed visual for this epoch
         pred = _predict_sample(
@@ -451,6 +476,8 @@ def main(argv: list[str] | None = None) -> int:
         "stage2_epochs": stage2_epochs,
         "lr_schedule": lr_schedule,
         "lr_min": lr_min,
+        "augmentation_policy": aug_policy,
+        "augmentation_description": describe_augmentation_policy(aug_policy),
         "checkpoint_views": {
             "final_epoch": {
                 "selected_by": "final_epoch",
@@ -491,6 +518,7 @@ def main(argv: list[str] | None = None) -> int:
         "eval_split": "test",
         "variant": variant,
         "seed": int(args.seed),
+        "augmentation_policy": aug_policy,
     }, indent=2, sort_keys=True))
 
     if wandb_run is not None:

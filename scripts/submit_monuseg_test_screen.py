@@ -40,6 +40,10 @@ VARIANTS = {
     # Batch 2 — Priority C: corrected staged schedule (stage1=20)
     "A5stage20fromA3M4": "configs/test_screen/monuseg_a5_staged20_from_a3m4.yaml",
     "A5stage20noMem": "configs/test_screen/monuseg_a5_staged20_no_memory.yaml",
+    # Batch 3 — augmentation variants (autosam_dense_v1)
+    "A3M4short20aug": "configs/test_screen/monuseg_a3m4_short20_aug.yaml",
+    "A3M4cos40aug": "configs/test_screen/monuseg_a3m4_cosine40_aug.yaml",
+    "A5stage20noMemAug": "configs/test_screen/monuseg_a5_staged20_no_memory_aug.yaml",
 }
 
 VARIANT_NAMES = {
@@ -55,6 +59,9 @@ VARIANT_NAMES = {
     "A3M8cos40": "monuseg-testscreen-a3m8-cos40",
     "A5stage20fromA3M4": "monuseg-testscreen-a5stage20-a3m4",
     "A5stage20noMem": "monuseg-testscreen-a5stage20-nomem",
+    "A3M4short20aug": "monuseg-testscreen-a3m4-short20-aug",
+    "A3M4cos40aug": "monuseg-testscreen-a3m4-cos40-aug",
+    "A5stage20noMemAug": "monuseg-testscreen-a5stage20-nomem-aug",
 }
 
 
@@ -151,8 +158,8 @@ def main() -> int:
     parser.add_argument("--seeds", default="0,1,2", help="Comma-separated seeds")
     parser.add_argument(
         "--variants",
-        default="A3M4short20,A3M4cos40,A5stage20fromA3M4,A5stage20noMem",
-        help="Comma-separated variant keys (default: minimum next batch)",
+        default="A3M4short20aug,A3M4cos40aug,A5stage20noMemAug",
+        help="Comma-separated variant keys (default: batch 3 augmentation variants)",
     )
     args = parser.parse_args()
 
