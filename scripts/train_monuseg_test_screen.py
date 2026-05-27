@@ -407,6 +407,8 @@ def main(argv: list[str] | None = None) -> int:
         if scheduler is not None:
             scheduler.step()
 
+        stage_label = "stage1" if (is_two_stage and epoch <= stage1_epochs) else ("stage2" if is_two_stage else "train")
+
         # Append to per-epoch CSV (no buffering — readable mid-run)
         with per_epoch_csv.open("a") as _f:
             _f.write(f"{epoch},{stage_label},{train_stats['loss']:.6f},{lr:.8f},{test_dice:.6f},{test_iou:.6f},{int(epoch == best_test_epoch)}\n")
@@ -421,8 +423,6 @@ def main(argv: list[str] | None = None) -> int:
             epoch=epoch, variant=variant, seed=args.seed,
             dice=test_dice, iou=test_iou,
         )
-
-        stage_label = "stage1" if (is_two_stage and epoch <= stage1_epochs) else ("stage2" if is_two_stage else "train")
         alpha_val = None
         if is_two_stage and epoch > stage1_epochs and hasattr(head, "alpha") and head.alpha is not None:
             alpha_val = float(torch.sigmoid(head.alpha).item())
