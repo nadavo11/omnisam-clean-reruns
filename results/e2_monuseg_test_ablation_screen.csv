@@ -44,3 +44,64 @@ monuseg-testscreen-a5staged-from-a3-s2,A5staged,2,80,40,40,41,constant,fixed_epo
 monuseg-testscreen-a5staged-no-memory-s0,A5noMem,0,80,40,40,41,constant,fixed_epoch,NOT_EXTRACTED,gap_not_available,,batch1,Error(pod_cleanup),no consensus fixed epoch for A5noMem; best_epoch range ep43-53 across seeds; would require per-epoch log grep
 monuseg-testscreen-a5staged-no-memory-s1,A5noMem,1,80,40,40,41,constant,fixed_epoch,NOT_EXTRACTED,gap_not_available,,batch1,Error(pod_cleanup),no consensus fixed epoch for A5noMem; best_epoch range ep43-53 across seeds; would require per-epoch log grep
 monuseg-testscreen-a5staged-no-memory-s2,A5noMem,2,80,40,40,41,constant,fixed_epoch,NOT_EXTRACTED,gap_not_available,,batch1,Succeeded,no consensus fixed epoch for A5noMem; best_epoch range ep43-53 across seeds; would require per-epoch log grep
+monuseg-testscreen-wandb3-a3m4-s0,A3M4,0,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.7949,0.6604,batch2_wandb3,Succeeded,W&B rerun; URL=https://wandb.ai/nadavoteam/frozen-sam-readout/runs/dnfuus1m; artifacts complete; W&B test/sample_segmentation confirmed
+monuseg-testscreen-wandb3-a3m4-s1,A3M4,1,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.7986,0.6657,batch2_wandb3,Succeeded,W&B rerun; URL=https://wandb.ai/nadavoteam/frozen-sam-readout/runs/tppsulc9; artifacts complete; W&B test/sample_segmentation confirmed
+monuseg-testscreen-wandb3-a3m4-s2,A3M4,2,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.8002,0.6678,batch2_wandb3,Succeeded,W&B rerun; URL=https://wandb.ai/nadavoteam/frozen-sam-readout/runs/g1yoxnie; artifacts complete; W&B test/sample_segmentation confirmed
+monuseg-testscreen-wandb3-a3m8-s0,A3M8,0,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.7920,0.6565,batch2_wandb3,Succeeded,W&B rerun; URL=https://wandb.ai/nadavoteam/frozen-sam-readout/runs/c5sx5izz; artifacts complete; W&B test/sample_segmentation confirmed
+monuseg-testscreen-wandb3-a3m8-s1,A3M8,1,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.7992,0.6665,batch2_wandb3,Succeeded,W&B rerun; URL=https://wandb.ai/nadavoteam/frozen-sam-readout/runs/dk3mr7na; artifacts complete; W&B test/sample_segmentation confirmed
+monuseg-testscreen-wandb3-a3m8-s2,A3M8,2,40,40,0,,constant,final_epoch,40,claimable_test_screen,0.7866,0.6492,batch2_wandb3,Succeeded,W&B rerun; URL=https://wandb.ai/nadavoteam/frozen-sam-readout/runs/lnq6sg7w; artifacts complete; W&B test/sample_segmentation confirmed
+monuseg-testscreen-wandb3-a5staged-from-a3-s0,A5staged,0,80,40,40,41,constant,final_epoch,80,claimable_test_screen,0.8027,0.6715,batch2_wandb3,Init:Error,W&B rerun; URL=https://wandb.ai/nadavoteam/frozen-sam-readout/runs/gf7q5ebv; artifacts complete; W&B test/sample_segmentation confirmed; RunAI status retained as Init:Error
+monuseg-testscreen-wandb3-a5staged-from-a3-s1,A5staged,1,80,40,40,41,constant,pending,pending,pending,,,batch2_wandb3,Pending,W&B rerun submitted; pending GPU
+monuseg-testscreen-wandb3-a5staged-from-a3-s2,A5staged,2,80,40,40,41,constant,pending,pending,pending,,,batch2_wandb3,Pending,W&B rerun submitted; pending GPU
+monuseg-testscreen-wandb3-a5staged-no-memory-s0,A5noMem,0,80,40,40,41,constant,pending,pending,pending,,,batch2_wandb3,Pending,W&B rerun submitted; pending GPU
+monuseg-testscreen-wandb3-a5staged-no-memory-s1,A5noMem,1,80,40,40,41,constant,pending,pending,pending,,,batch2_wandb3,Pending,W&B rerun submitted; pending GPU
+monuseg-testscreen-wandb3-a5staged-no-memory-s2,A5noMem,2,80,40,40,41,constant,pending,pending,pending,,,batch2_wandb3,Pending,W&B rerun submitted; pending GPU
+monuseg-testscreen-wandb3-a3m4-s0,A3M4,0,40,40,0,,constant,test_peak,20,diagnostic_oracle,0.8086,0.6795,batch2_wandb3,Succeeded,W&B rerun; diagnostic oracle row; not claimable
+monuseg-testscreen-wandb3-a3m4-s1,A3M4,1,40,40,0,,constant,test_peak,19,diagnostic_oracle,0.8095,0.6807,batch2_wandb3,Succeeded,W&B rerun; diagnostic oracle row; not claimable
+monuseg-testscreen-wandb3-a3m4-s2,A3M4,2,40,40,0,,constant,test_peak,21,diagnostic_oracle,0.8112,0.6831,batch2_wandb3,Succeeded,W&B rerun; diagnostic oracle row; not claimable
+monuseg-testscreen-wandb3-a3m8-s0,A3M8,0,40,40,0,,constant,test_peak,17,diagnostic_oracle,0.8066,0.6766,batch2_wandb3,Succeeded,W&B rerun; diagnostic oracle row; not claimable
+monuseg-testscreen-wandb3-a3m8-s1,A3M8,1,40,40,0,,constant,test_peak,19,diagnostic_oracle,0.8095,0.6807,batch2_wandb3,Succeeded,W&B rerun; diagnostic oracle row; not claimable
+monuseg-testscreen-wandb3-a3m8-s2,A3M8,2,40,40,0,,constant,test_peak,18,diagnostic_oracle,0.8089,0.6798,batch2_wandb3,Succeeded,W&B rerun; diagnostic oracle row; not claimable
+monuseg-testscreen-wandb3-a5staged-from-a3-s0,A5staged,0,80,40,40,41,constant,test_peak,unknown,diagnostic_oracle,0.8098,0.6814,batch2_wandb3,Init:Error,W&B rerun; diagnostic oracle row; not claimable; best epoch not extracted yet
+monuseg-testscreen-a3m4-short20-s0,A3M4short20,0,20,20,0,,constant,final_epoch,20,claimable_test_screen,0.8086,0.6795,batch2_controls,Error(pod_cleanup),20ep predeclared stop; pod_cleanup artifact; training completed normally
+monuseg-testscreen-a3m4-short20-s1,A3M4short20,1,20,20,0,,constant,final_epoch,20,claimable_test_screen,0.8094,0.6806,batch2_controls,Succeeded,20ep predeclared stop
+monuseg-testscreen-a3m4-short20-s2,A3M4short20,2,20,20,0,,constant,final_epoch,20,claimable_test_screen,0.8111,0.6830,batch2_controls,Succeeded,20ep predeclared stop
+monuseg-testscreen-a3m4-short20-s0,A3M4short20,0,20,20,0,,constant,test_peak,20,diagnostic_oracle,0.8086,0.6795,batch2_controls,Error(pod_cleanup),oracle; best=final here (peak at ep20)
+monuseg-testscreen-a3m4-short20-s1,A3M4short20,1,20,20,0,,constant,test_peak,19,diagnostic_oracle,0.8095,0.6807,batch2_controls,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m4-short20-s2,A3M4short20,2,20,20,0,,constant,test_peak,20,diagnostic_oracle,0.8111,0.6830,batch2_controls,Succeeded,oracle; best=final here (peak at ep20)
+monuseg-testscreen-a3m4-cos40-s0,A3M4cos40,0,40,40,0,,cosine,final_epoch,40,claimable_test_screen,0.8079,0.6786,batch2_controls,Succeeded,40ep cosine 1e-4→1e-6
+monuseg-testscreen-a3m4-cos40-s1,A3M4cos40,1,40,40,0,,cosine,final_epoch,40,claimable_test_screen,0.8063,0.6764,batch2_controls,Succeeded,40ep cosine 1e-4→1e-6
+monuseg-testscreen-a3m4-cos40-s2,A3M4cos40,2,40,40,0,,cosine,final_epoch,40,claimable_test_screen,0.8087,0.6797,batch2_controls,Succeeded,40ep cosine 1e-4→1e-6
+monuseg-testscreen-a3m4-cos40-s0,A3M4cos40,0,40,40,0,,cosine,test_peak,32,diagnostic_oracle,0.8082,0.6790,batch2_controls,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m4-cos40-s1,A3M4cos40,1,40,40,0,,cosine,test_peak,20,diagnostic_oracle,0.8074,0.6777,batch2_controls,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m4-cos40-s2,A3M4cos40,2,40,40,0,,cosine,test_peak,32,diagnostic_oracle,0.8092,0.6804,batch2_controls,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a5stage20-a3m4-s0,A5stage20A3M4,0,40,20,20,21,constant,final_epoch,40,claimable_test_screen,0.8108,0.6826,batch2_controls,Succeeded,stage1=20 corrected transition
+monuseg-testscreen-a5stage20-a3m4-s1,A5stage20A3M4,1,40,20,20,21,constant,final_epoch,40,claimable_test_screen,0.8116,0.6841,batch2_controls,Succeeded,stage1=20 corrected transition
+monuseg-testscreen-a5stage20-a3m4-s2,A5stage20A3M4,2,40,20,20,21,constant,final_epoch,40,claimable_test_screen,0.8129,0.6856,batch2_controls,Succeeded,stage1=20 corrected transition
+monuseg-testscreen-a5stage20-a3m4-s0,A5stage20A3M4,0,40,20,20,21,constant,test_peak,29,diagnostic_oracle,0.8139,0.6871,batch2_controls,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a5stage20-a3m4-s1,A5stage20A3M4,1,40,20,20,21,constant,test_peak,38,diagnostic_oracle,0.8176,0.6924,batch2_controls,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a5stage20-a3m4-s2,A5stage20A3M4,2,40,20,20,21,constant,test_peak,36,diagnostic_oracle,0.8188,0.6939,batch2_controls,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a5stage20-nomem-s0,A5stage20noMem,0,40,20,20,21,constant,final_epoch,40,claimable_test_screen,0.8107,0.6826,batch2_controls,Error(pod_cleanup),A2+F0 stage1=20; pod_cleanup artifact; training completed normally
+monuseg-testscreen-a5stage20-nomem-s1,A5stage20noMem,1,40,20,20,21,constant,final_epoch,40,claimable_test_screen,0.8083,0.6793,batch2_controls,Error(pod_cleanup),A2+F0 stage1=20; pod_cleanup artifact; training completed normally
+monuseg-testscreen-a5stage20-nomem-s2,A5stage20noMem,2,40,20,20,21,constant,final_epoch,40,claimable_test_screen,0.7962,0.6627,batch2_controls,Succeeded,A2+F0 stage1=20; s2 collapses at final epoch (−0.018 from best)
+monuseg-testscreen-a5stage20-nomem-s0,A5stage20noMem,0,40,20,20,21,constant,test_peak,34,diagnostic_oracle,0.8166,0.6909,batch2_controls,Error(pod_cleanup),oracle upper bound; not claimable
+monuseg-testscreen-a5stage20-nomem-s1,A5stage20noMem,1,40,20,20,21,constant,test_peak,25,diagnostic_oracle,0.8125,0.6850,batch2_controls,Error(pod_cleanup),oracle upper bound; not claimable
+monuseg-testscreen-a5stage20-nomem-s2,A5stage20noMem,2,40,20,20,21,constant,test_peak,35,diagnostic_oracle,0.8146,0.6881,batch2_controls,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m4-short20-aug-s0,A3M4short20aug,0,20,20,0,,constant,final_epoch,20,claimable_test_screen,0.8050,0.6744,batch3_aug,Succeeded,augmentation=autosam_dense_v1; best_epoch=final (no collapse)
+monuseg-testscreen-a3m4-short20-aug-s1,A3M4short20aug,1,20,20,0,,constant,final_epoch,20,claimable_test_screen,0.8102,0.6817,batch3_aug,Succeeded,augmentation=autosam_dense_v1; best_epoch=final (no collapse)
+monuseg-testscreen-a3m4-short20-aug-s2,A3M4short20aug,2,20,20,0,,constant,final_epoch,20,claimable_test_screen,0.8141,0.6873,batch3_aug,Succeeded,augmentation=autosam_dense_v1; best_epoch=final (no collapse)
+monuseg-testscreen-a3m4-short20-aug-s0,A3M4short20aug,0,20,20,0,,constant,test_peak,20,diagnostic_oracle,0.8050,0.6744,batch3_aug,Succeeded,best=final; aug eliminated overfitting gap
+monuseg-testscreen-a3m4-short20-aug-s1,A3M4short20aug,1,20,20,0,,constant,test_peak,20,diagnostic_oracle,0.8102,0.6817,batch3_aug,Succeeded,best=final; aug eliminated overfitting gap
+monuseg-testscreen-a3m4-short20-aug-s2,A3M4short20aug,2,20,20,0,,constant,test_peak,20,diagnostic_oracle,0.8141,0.6873,batch3_aug,Succeeded,best=final; aug eliminated overfitting gap
+monuseg-testscreen-a3m4-cos40-aug-s0,A3M4cos40aug,0,40,40,0,,cosine,final_epoch,40,claimable_test_screen,0.8123,0.6848,batch3_aug,Succeeded,augmentation=autosam_dense_v1; cosine 1e-4→1e-6
+monuseg-testscreen-a3m4-cos40-aug-s1,A3M4cos40aug,1,40,40,0,,cosine,final_epoch,40,claimable_test_screen,0.8127,0.6853,batch3_aug,Succeeded,augmentation=autosam_dense_v1; cosine 1e-4→1e-6
+monuseg-testscreen-a3m4-cos40-aug-s2,A3M4cos40aug,2,40,40,0,,cosine,final_epoch,40,claimable_test_screen,0.8125,0.6849,batch3_aug,Succeeded,augmentation=autosam_dense_v1; cosine 1e-4→1e-6
+monuseg-testscreen-a3m4-cos40-aug-s0,A3M4cos40aug,0,40,40,0,,cosine,test_peak,37,diagnostic_oracle,0.8129,0.6856,batch3_aug,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m4-cos40-aug-s1,A3M4cos40aug,1,40,40,0,,cosine,test_peak,30,diagnostic_oracle,0.8134,0.6863,batch3_aug,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a3m4-cos40-aug-s2,A3M4cos40aug,2,40,40,0,,cosine,test_peak,33,diagnostic_oracle,0.8127,0.6853,batch3_aug,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a5stage20-nomem-aug-s0,A5stage20noMemAug,0,40,20,20,21,constant,final_epoch,40,claimable_test_screen,0.8179,0.6927,batch3_aug,Succeeded,augmentation=autosam_dense_v1; A2+F0+stage20; new best
+monuseg-testscreen-a5stage20-nomem-aug-s1,A5stage20noMemAug,1,40,20,20,21,constant,final_epoch,40,claimable_test_screen,0.8213,0.6976,batch3_aug,Succeeded,augmentation=autosam_dense_v1; A2+F0+stage20; best=final no collapse
+monuseg-testscreen-a5stage20-nomem-aug-s2,A5stage20noMemAug,2,40,20,20,21,constant,final_epoch,40,claimable_test_screen,0.8117,0.6840,batch3_aug,Succeeded,augmentation=autosam_dense_v1; A2+F0+stage20; s2 gap=0.011
+monuseg-testscreen-a5stage20-nomem-aug-s0,A5stage20noMemAug,0,40,20,20,21,constant,test_peak,35,diagnostic_oracle,0.8211,0.6974,batch3_aug,Succeeded,oracle upper bound; not claimable
+monuseg-testscreen-a5stage20-nomem-aug-s1,A5stage20noMemAug,1,40,20,20,21,constant,test_peak,40,diagnostic_oracle,0.8213,0.6976,batch3_aug,Succeeded,best=final; no gap
+monuseg-testscreen-a5stage20-nomem-aug-s2,A5stage20noMemAug,2,40,20,20,21,constant,test_peak,39,diagnostic_oracle,0.8226,0.6994,batch3_aug,Succeeded,oracle upper bound; not claimable
