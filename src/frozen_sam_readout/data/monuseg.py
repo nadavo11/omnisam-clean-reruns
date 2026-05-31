@@ -84,9 +84,13 @@ def load_monuseg_binary_overview(
     split: str = "test",
     dataset_name: str = MONUSEG_HF_DATASET_NAME,
     cache_dir: Optional[str] = None,
+    include_extra_train_unknown: bool = False,
 ) -> MonusegBinaryOverview:
     records = _resolve_monuseg_records(
-        split=split, dataset_name=dataset_name, cache_dir=cache_dir
+        split=split,
+        dataset_name=dataset_name,
+        cache_dir=cache_dir,
+        include_extra_train_unknown=include_extra_train_unknown,
     )
     return MonusegBinaryOverview(
         dataset_id=MONUSEG_DATASET_ID,
@@ -95,7 +99,11 @@ def load_monuseg_binary_overview(
         num_examples=len(records),
         patient_ids=tuple(str(record["patient"]) for record in records),
         evaluation_view="direct_foreground",
-        train_selection_policy="official_challenge_train_excludes_tissue_0_unknown",
+        train_selection_policy=(
+            "hf_train_all_37_includes_tissue_0_unknown"
+            if include_extra_train_unknown
+            else "official_challenge_train_excludes_tissue_0_unknown"
+        ),
         cache_dir=cache_dir,
     )
 
@@ -107,9 +115,13 @@ def iter_monuseg_binary_samples(
     cache_dir: Optional[str] = None,
     limit: Optional[int] = None,
     start_index: int = 0,
+    include_extra_train_unknown: bool = False,
 ) -> Iterator[MonusegBinarySample]:
     records = _resolve_monuseg_records(
-        split=split, dataset_name=dataset_name, cache_dir=cache_dir
+        split=split,
+        dataset_name=dataset_name,
+        cache_dir=cache_dir,
+        include_extra_train_unknown=include_extra_train_unknown,
     )
     max_items = (
         max(0, len(records) - start_index)
@@ -121,7 +133,11 @@ def iter_monuseg_binary_samples(
 
 
 def _resolve_monuseg_records(
-    *, split: str, dataset_name: str, cache_dir: Optional[str]
+    *,
+    split: str,
+    dataset_name: str,
+    cache_dir: Optional[str],
+    include_extra_train_unknown: bool = False,
 ) -> tuple[dict[str, Any], ...]:
     if split not in MONUSEG_SUPPORTED_SPLITS:
         raise ValueError(
@@ -143,7 +159,7 @@ def _resolve_monuseg_records(
             "cache_dir": cache_dir,
         }
         for i in range(len(train_patients))
-        if int(train_tissues[i]) != 0
+        if include_extra_train_unknown or int(train_tissues[i]) != 0
     )
     test_records = tuple(
         {

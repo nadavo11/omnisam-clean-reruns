@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 
@@ -26,12 +27,35 @@ JOB_SLUGS = {
     "FPNplusD0_box_plus_learned_text_soft_prompt_aug80_s0": "monuseg-lprompt-fpnd0-textsoft",
 }
 
+SYNC_SLUGS = {
+    "FPNplusD0_boxprompt_aug80_reference": "boxref",
+    "FPNplusD0_learned_sparse_prompt_aug80": "sparse",
+    "FPNplusD0_box_plus_learned_delta_aug80": "delta",
+    "D0small_box_plus_learned_delta_aug80": "d0delta",
+    "FPNplusD0_box_plus_learned_text_soft_prompt_aug80_s0": "textsoft",
+}
+
 
 def submit(*, variant: str, seed: int, branch: str, dry_run: bool) -> None:
     job_name = f"{JOB_SLUGS[variant]}-s{seed}"
     run_name = job_name.replace("-", "_")
-    sync_target = f"/storage/nada/learned_prompt_code/{JOB_SLUGS[variant]}/s{seed}"
+    sync_target = f"/storage/nada/lpcode/{SYNC_SLUGS[variant]}/s{seed}"
     repo_dir = f"{sync_target}/omnisam-clean-reruns.git"
+    train_cmd = (
+        "set -euo pipefail; "
+        "if [ -f /storage/nada/envs/texture-representations-runai-cu128/bin/activate ]; then "
+        "source /storage/nada/envs/texture-representations-runai-cu128/bin/activate; "
+        "fi; "
+        f"cd {repo_dir}; "
+        "export PYTHONPATH=src; "
+        "python scripts/train_monuseg_test_screen.py "
+        f"--config {VARIANTS[variant]} "
+        f"--seed {seed} "
+        f"--run-name {run_name} "
+        f"--output-dir /storage/nada/learned_prompt/{variant}/s{seed} "
+        f"--wandb-group {variant} "
+        "--wandb-job-type TEST_SCREEN_LEARNED_PROMPT"
+    )
     cmd = [
         "runai",
         "submit",
@@ -64,26 +88,17 @@ def submit(*, variant: str, seed: int, branch: str, dry_run: bool) -> None:
         "--environment",
         "RUNAI_VENV_ROOT=/storage/nada/envs/texture-representations-runai-cu128",
         "--environment",
+        "RUNAI_ENABLE_PERSISTENT_VENV=1",
+        "--environment",
         "WANDB_MODE=online",
         "--environment",
         "WANDB_PROJECT=frozen-sam-readout",
-        "--command",
-        "--",
-        "python",
-        f"{repo_dir}/scripts/train_monuseg_test_screen.py",
-        "--config",
-        f"{repo_dir}/{VARIANTS[variant]}",
-        "--seed",
-        str(seed),
-        "--run-name",
-        run_name,
-        "--output-dir",
-        f"/storage/nada/learned_prompt/{variant}/s{seed}",
-        "--wandb-group",
-        variant,
-        "--wandb-job-type",
-        "TEST_SCREEN_LEARNED_PROMPT",
     ]
+    for env_name in ("HF_TOKEN", "HUGGINGFACE_HUB_TOKEN", "WANDB_API_KEY"):
+        env_value = os.environ.get(env_name)
+        if env_value:
+            cmd.extend(["--environment", f"{env_name}={env_value}"])
+    cmd.extend(["--command", "--", "bash", "-lc", train_cmd])
     print(" ".join(subprocess.list2cmdline([part]) for part in cmd))
     if dry_run:
         return
