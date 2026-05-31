@@ -63,6 +63,14 @@ _SINGLE_STAGE_VARIANTS = {
     "d0_f0_f1_fusion",
     "d0_f1_f2_fusion",
     "d0_f0_f2_fusion",
+    "d0fpn_source_gated_se",
+    "d0fpn_cbam",
+    "d0_query_fpn_crossattn",
+    "fpn_query_d0_crossattn",
+    "d0fpn_bidirectional_crossattn",
+    "d0fpn_task_tokens_film",
+    "d0fpn_window_selfattn",
+    "d0fpn_global_context_nonlocal",
 }
 _TWO_STAGE_VARIANTS = {"final_staged", "final_staged_a2"}
 _ALL_VARIANTS = _SINGLE_STAGE_VARIANTS | _TWO_STAGE_VARIANTS
@@ -376,6 +384,47 @@ def _build_head(variant: str, channels: dict, method_config: dict) -> torch.nn.M
             "source_keys": ("decoder_semantic_map", *source_keys),
             "projection_dim": int(model_cfg.get("projection_dim", 64)),
         }
+    elif variant in {
+        "d0fpn_source_gated_se",
+        "d0fpn_cbam",
+        "d0_query_fpn_crossattn",
+        "fpn_query_d0_crossattn",
+        "d0fpn_bidirectional_crossattn",
+        "d0fpn_task_tokens_film",
+        "d0fpn_window_selfattn",
+        "d0fpn_global_context_nonlocal",
+    }:
+        source_channels = {
+            "decoder_semantic_map": int(channels["decoder_map_channels"]),
+            "fpn_2": int(channels["f2_channels"]),
+            "fpn_1": int(channels["f1_channels"]),
+            "fpn_0": int(channels["f0_channels"]),
+        }
+        kwargs = {
+            "source_channels": source_channels,
+            "source_keys": ("decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"),
+            "projection_dim": int(model_cfg.get("projection_dim", 64)),
+            "decoder_dim": int(model_cfg.get("decoder_dim", 128)),
+        }
+        if variant == "d0fpn_source_gated_se":
+            kwargs["gate_scale"] = float(model_cfg.get("gate_scale", 0.1))
+        elif variant == "d0fpn_cbam":
+            kwargs["reduction"] = int(model_cfg.get("cbam_reduction", 4))
+        elif variant in {"d0_query_fpn_crossattn", "fpn_query_d0_crossattn", "d0fpn_bidirectional_crossattn"}:
+            kwargs["num_heads"] = int(model_cfg.get("num_heads", 4))
+            kwargs["pool_hw"] = int(model_cfg.get("pool_hw", 16))
+        elif variant == "d0fpn_task_tokens_film":
+            kwargs["num_tokens"] = int(model_cfg.get("num_tokens", 4))
+            kwargs["num_heads"] = int(model_cfg.get("num_heads", 4))
+            kwargs["pool_hw"] = int(model_cfg.get("pool_hw", 16))
+        elif variant == "d0fpn_window_selfattn":
+            kwargs["num_heads"] = int(model_cfg.get("num_heads", 4))
+            kwargs["pool_hw"] = int(model_cfg.get("pool_hw", 16))
+            kwargs["window_size"] = int(model_cfg.get("window_size", 4))
+        elif variant == "d0fpn_global_context_nonlocal":
+            kwargs["num_heads"] = int(model_cfg.get("num_heads", 4))
+            kwargs["query_hw"] = int(model_cfg.get("query_hw", 16))
+            kwargs["context_hw"] = int(model_cfg.get("context_hw", 8))
     kwargs.pop("decoder_dim", None)
     kwargs["decoder_dim"] = int(model_cfg.get("decoder_dim", 128))
     return build_head(variant, **kwargs)
@@ -403,6 +452,14 @@ def _feature_sources_for_variant(variant: str) -> list[str]:
         "d0_f0_f1_fusion": ["decoder_semantic_map", "fpn_0", "fpn_1"],
         "d0_f1_f2_fusion": ["decoder_semantic_map", "fpn_1", "fpn_2"],
         "d0_f0_f2_fusion": ["decoder_semantic_map", "fpn_0", "fpn_2"],
+        "d0fpn_source_gated_se": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_cbam": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0_query_fpn_crossattn": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "fpn_query_d0_crossattn": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_bidirectional_crossattn": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_task_tokens_film": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_window_selfattn": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_global_context_nonlocal": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
     }
     return mapping.get(variant, [])
 
@@ -699,6 +756,11 @@ def main(argv: list[str] | None = None) -> int:
 
     head = _build_head(variant, actual_channels, method_config).to(device)
     head_param_count = _head_param_count(head)
+    head_class_name = type(head).__name__
+    attention_type = str(getattr(head, "attention_type", ""))
+    feature_shapes["head_class_name"] = head_class_name
+    feature_shapes["attention_type"] = attention_type
+    (out_dir / "feature_shapes.json").write_text(json.dumps(feature_shapes, indent=2, sort_keys=True))
     prompt_param_count = int(extractor.prompt_parameter_count()) if isinstance(extractor, LearnedPromptedSam3) else 0
     feature_sources = _feature_sources_for_variant(variant)
     if is_two_stage:
@@ -739,12 +801,24 @@ def main(argv: list[str] | None = None) -> int:
     wandb_url = "unavailable"
     try:
         import wandb
+        wandb_tags = ["monuseg", "test_screen", variant, f"seed{args.seed}"]
+        if variant.startswith("d0fpn_"):
+            wandb_tags = [
+                "monuseg",
+                "corrected37",
+                "d0_fpn",
+                "attention_context",
+                "final_epoch_claimable",
+                "aug80",
+                variant,
+                f"seed{args.seed}",
+            ]
         wandb_run = wandb.init(
             project=args.wandb_project,
             group=args.wandb_group,
             job_type=args.wandb_job_type,
             name=args.run_name,
-            tags=["monuseg", "test_screen", variant, f"seed{args.seed}"],
+            tags=wandb_tags,
             config={
                 "run_name": args.run_name,
                 "variant": variant,
@@ -760,6 +834,8 @@ def main(argv: list[str] | None = None) -> int:
                 "decoder_map_channels": feature_shapes["decoder_map_channels"],
                 "decoder_semantic_map_enabled": feature_shapes["decoder_semantic_map_enabled"],
                 "decoder_prompt_mode": feature_shapes["decoder_prompt_mode"],
+                "head_class_name": head_class_name,
+                "attention_type": attention_type,
                 "prompt_mode": prompt_mode,
                 "prompt_config": prompt_cfg,
                 "prompt_insertion_point": prompt_insertion_note,
@@ -799,13 +875,15 @@ def main(argv: list[str] | None = None) -> int:
         out_dir,
         config={"config": config},
         extras={
-            "run_name": args.run_name, "variant": variant, "seed": int(args.seed),
-            "eval_split": "test", "stage": "TEST_SCREEN",
-            "backbone_backend": backbone_backend,
-            "head_param_count": head_param_count,
-            "prompt_param_count": prompt_param_count,
-            "feature_sources": feature_sources,
-            "feature_control": feature_control,
+                "run_name": args.run_name, "variant": variant, "seed": int(args.seed),
+                "eval_split": "test", "stage": "TEST_SCREEN",
+                "backbone_backend": backbone_backend,
+                "head_param_count": head_param_count,
+                "head_class_name": head_class_name,
+                "attention_type": attention_type,
+                "prompt_param_count": prompt_param_count,
+                "feature_sources": feature_sources,
+                "feature_control": feature_control,
             "train_selection_policy": split_manifest["train_selection_policy"],
             "prompt_mode": prompt_mode,
             "prompt_config": prompt_cfg,
@@ -984,6 +1062,12 @@ def main(argv: list[str] | None = None) -> int:
                     f"{prompt_log_dict.get('prompt_delta_norm', float('nan'))},"
                     f"{prompt_log_dict.get('prompt_cosine_from_init', float('nan'))}\n"
                 )
+        context_log_dict = {}
+        if hasattr(head, "context_state_summary"):
+            try:
+                context_log_dict = dict(getattr(head, "context_state_summary")() or {})
+            except Exception as exc:
+                print(f"[warn] attention context summary failed at epoch {epoch}: {exc}", file=sys.stderr)
 
         if wandb_run is not None:
             try:
@@ -1012,6 +1096,9 @@ def main(argv: list[str] | None = None) -> int:
                 for key, value in prompt_log_dict.items():
                     if isinstance(value, (int, float, bool)):
                         log_dict[f"prompt/{key}"] = value
+                for key, value in context_log_dict.items():
+                    if isinstance(value, (int, float, bool)):
+                        log_dict[f"attention/{key}"] = value
                 wandb_run.log(log_dict)
             except Exception as exc:
                 print(f"[warn] wandb logging failed at epoch {epoch}: {exc}", file=sys.stderr)
@@ -1054,6 +1141,28 @@ def main(argv: list[str] | None = None) -> int:
     final_sha = _sha256(final_ckpt)
     best_sha = _sha256(best_ckpt) if best_ckpt.exists() else ""
     (out_dir / "checkpoint_sha256.txt").write_text(final_sha + "\n")
+    attention_diagnostics = {
+        "head_class_name": head_class_name,
+        "attention_type": attention_type,
+        "context_summary": {},
+        "attention_map_shapes": {},
+        "attention_map_keys": [],
+    }
+    if hasattr(head, "context_state_summary"):
+        try:
+            attention_diagnostics["context_summary"] = dict(getattr(head, "context_state_summary")() or {})
+        except Exception as exc:
+            attention_diagnostics["context_summary_error"] = str(exc)
+    if hasattr(head, "attention_maps"):
+        try:
+            attn_maps = getattr(head, "attention_maps")() or {}
+            attention_diagnostics["attention_map_keys"] = sorted(attn_maps)
+            attention_diagnostics["attention_map_shapes"] = {
+                key: list(np.asarray(value).shape) for key, value in attn_maps.items()
+            }
+        except Exception as exc:
+            attention_diagnostics["attention_map_error"] = str(exc)
+    (out_dir / "attention_diagnostics.json").write_text(json.dumps(attention_diagnostics, indent=2, sort_keys=True))
     prompt_reload_ok = None
     if isinstance(extractor, LearnedPromptedSam3):
         before = {
@@ -1092,6 +1201,8 @@ def main(argv: list[str] | None = None) -> int:
         "visual_every": visual_every,
         "checkpoint_selection": "final_epoch",
         "head_param_count": head_param_count,
+        "head_class_name": head_class_name,
+        "attention_type": attention_type,
         "prompt_param_count": prompt_param_count,
         "prompt_mode": prompt_mode,
         "prompt_config_path": str((out_dir / "prompt_config.json").resolve()),
@@ -1101,6 +1212,7 @@ def main(argv: list[str] | None = None) -> int:
         "prompt_reload_ok": prompt_reload_ok,
         "feature_control": feature_control,
         "feature_sources": feature_sources,
+        "attention_diagnostics_path": str((out_dir / "attention_diagnostics.json").resolve()),
         "checkpoint_views": {
             "final_epoch": {
                 "selected_by": "final_epoch",
@@ -1134,6 +1246,8 @@ def main(argv: list[str] | None = None) -> int:
         "train_count": len(train_samples),
         "test_count": len(test_samples),
         "backbone_backend": backbone_backend,
+        "head_class_name": head_class_name,
+        "attention_type": attention_type,
         "channel_parity_ok": feature_shapes["channel_parity_ok"],
         "paper_headline_safe": feature_shapes["paper_headline_safe"],
         "decoder_semantic_map_enabled": feature_shapes["decoder_semantic_map_enabled"],
@@ -1166,6 +1280,8 @@ def main(argv: list[str] | None = None) -> int:
                 "backbone_backend": backbone_backend,
                 "decoder_semantic_map_enabled": feature_shapes["decoder_semantic_map_enabled"],
                 "head_param_count": head_param_count,
+                "head_class_name": head_class_name,
+                "attention_type": attention_type,
                 "prompt_param_count": prompt_param_count,
                 "prompt_mode": prompt_mode,
                 "feature_sources": feature_sources,
@@ -1173,6 +1289,8 @@ def main(argv: list[str] | None = None) -> int:
             if prompt_insertion_note is not None:
                 for key, value in prompt_insertion_note.items():
                     wandb_run.summary[f"prompt/{key}"] = value
+            for key, value in attention_diagnostics.get("context_summary", {}).items():
+                wandb_run.summary[f"attention/{key}"] = value
             if semantic_coherence:
                 for key, value in semantic_coherence.get("mean", {}).items():
                     wandb_run.summary[f"semantic/{key}"] = value
