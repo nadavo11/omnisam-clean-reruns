@@ -39,16 +39,31 @@ from PIL import Image
 import yaml
 
 from frozen_sam_readout.data import iter_monuseg_binary_samples
-from frozen_sam_readout.evaluation.official_eval import run_official_eval
+from frozen_sam_readout.evaluation.official_eval import run_official_eval, write_per_sample_csv
+from frozen_sam_readout.evaluation.metrics import compute_binary_metrics
 from frozen_sam_readout.models.registry import build_head
-from frozen_sam_readout.sam import build_frozen_sam_pyramid_extractor
+from frozen_sam_readout.sam import LearnedPromptedSam3, build_frozen_sam_pyramid_extractor
 from frozen_sam_readout.training import bce_dice_loss, load_checkpoint, save_checkpoint, train_one_epoch
 from frozen_sam_readout.training.augmentations import apply_augmentation, describe_augmentation_policy
 from frozen_sam_readout.utils import load_yaml_config, set_seed, write_run_manifest
 from frozen_sam_readout.utils.config import assert_monuseg_no_val
 from frozen_sam_readout.visualization import compose_strip, binary_error_map, render_gt_overlay, render_single_mask_overlay
 
-_SINGLE_STAGE_VARIANTS = {"a0_fpn2", "a2_fpn2_fpn1_refine", "a3_memory"}
+_SINGLE_STAGE_VARIANTS = {
+    "a0_fpn2",
+    "a2_fpn2_fpn1_refine",
+    "a3_memory",
+    "d0_linear",
+    "d0_small_head",
+    "fpn_plus_d0",
+    "d0_fpn_fusion",
+    "d0_f0_fusion",
+    "d0_f1_fusion",
+    "d0_f2_fusion",
+    "d0_f0_f1_fusion",
+    "d0_f1_f2_fusion",
+    "d0_f0_f2_fusion",
+}
 _TWO_STAGE_VARIANTS = {"final_staged", "final_staged_a2"}
 _ALL_VARIANTS = _SINGLE_STAGE_VARIANTS | _TWO_STAGE_VARIANTS
 
@@ -74,6 +89,8 @@ def _streaming_feature_iter(
     *,
     aug_policy: str = "none",
     rng: "np.random.Generator | None" = None,
+    feature_control: dict | None = None,
+    seed: int = 0,
 ) -> Iterator[dict]:
     for sample in samples:
         if aug_policy != "none" and rng is not None:
@@ -81,6 +98,12 @@ def _streaming_feature_iter(
             sample = apply_augmentation(sample, rng=rng, policy=aug_policy)
         img = _resize_image(sample.image, resize_hw)
         _, pyramid_np = extractor.extract_sam_pyramid(img)
+        pyramid_np = _apply_decoder_map_control(
+            pyramid_np,
+            sample_id=str(sample.crop_name),
+            seed=seed,
+            control=feature_control,
+        )
         pyramid_t = {
             name: torch.from_numpy(np.ascontiguousarray(f)).float()
             for name, f in pyramid_np.items()
@@ -89,9 +112,59 @@ def _streaming_feature_iter(
         yield {"pyramid": pyramid_t, "target": target}
 
 
-def _predict_sample(*, extractor, head, sample, resize_hw, device, threshold):
+def _prompt_cfg(config: dict) -> dict:
+    return dict(config.get("prompt", {}))
+
+
+def _is_learned_prompt_mode(config: dict) -> bool:
+    mode = str(_prompt_cfg(config).get("mode", "fixed_full_image_box"))
+    return mode in {"learned_constant_sparse", "fixed_full_image_box_plus_learned_delta"}
+
+
+def _train_one_epoch_prompted(
+    *,
+    prompt_model: LearnedPromptedSam3,
+    head: torch.nn.Module,
+    samples: Iterable,
+    resize_hw,
+    aug_policy: str,
+    rng: "np.random.Generator | None",
+    optimizer: torch.optim.Optimizer,
+    loss_fn,
+    device: torch.device,
+) -> dict[str, float]:
+    head.train()
+    prompt_model.train()
+    total_loss = 0.0
+    count = 0
+    for sample in samples:
+        if aug_policy != "none" and rng is not None:
+            sample = apply_augmentation(sample, rng=rng, policy=aug_policy)
+        image = _resize_image(sample.image, resize_hw)
+        pyramid = prompt_model.forward_pyramid(image, capture_numpy=False)
+        logits = head({k: v.unsqueeze(0).to(device) for k, v in pyramid.items()})
+        target = torch.from_numpy(np.asarray(sample.texture_a_mask, dtype=np.float32)).to(device)
+        target_resized = F.interpolate(
+            target[None, None, ...], size=logits.shape[-2:], mode="bilinear", align_corners=False
+        )
+        loss = loss_fn(logits, target_resized)
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        optimizer.step()
+        total_loss += float(loss.detach().cpu())
+        count += 1
+    return {"loss": total_loss / max(count, 1)}
+
+
+def _predict_sample(*, extractor, head, sample, resize_hw, device, threshold, feature_control=None, seed: int = 0):
     image = _resize_image(sample.image, resize_hw)
     _, pyramid_np = extractor.extract_sam_pyramid(image)
+    pyramid_np = _apply_decoder_map_control(
+        pyramid_np,
+        sample_id=str(sample.crop_name),
+        seed=seed,
+        control=feature_control,
+    )
     tensors = {
         k: torch.from_numpy(np.ascontiguousarray(v)).float().unsqueeze(0).to(device)
         for k, v in pyramid_np.items()
@@ -100,6 +173,52 @@ def _predict_sample(*, extractor, head, sample, resize_hw, device, threshold):
         logits = head(tensors)
         logits_up = F.interpolate(logits, size=sample.texture_a_mask.shape, mode="bilinear", align_corners=False)
         return (torch.sigmoid(logits_up)[0, 0].cpu().numpy() > threshold).astype(bool)
+
+
+def _stable_rng(*, sample_id: str, seed: int, purpose: str) -> np.random.Generator:
+    payload = f"{purpose}|{sample_id}|{int(seed)}".encode("utf-8")
+    value = int.from_bytes(hashlib.sha256(payload).digest()[:8], "little", signed=False)
+    return np.random.default_rng(value)
+
+
+def _apply_decoder_map_control(
+    pyramid_np: dict[str, np.ndarray],
+    *,
+    sample_id: str,
+    seed: int,
+    control: dict | None,
+) -> dict[str, np.ndarray]:
+    if not control or str(control.get("mode", "none")).lower() == "none":
+        return pyramid_np
+    if "decoder_semantic_map" not in pyramid_np:
+        return pyramid_np
+    mode = str(control.get("mode", "none")).lower()
+    d0 = np.asarray(pyramid_np["decoder_semantic_map"], dtype=np.float32)
+    c, h, w = d0.shape
+    rng = _stable_rng(sample_id=sample_id, seed=seed, purpose=mode)
+    out = dict(pyramid_np)
+    if mode == "spatial_permutation":
+        perm = rng.permutation(h * w)
+        out["decoder_semantic_map"] = np.ascontiguousarray(d0.reshape(c, h * w)[:, perm].reshape(c, h, w))
+    elif mode == "block_shuffle":
+        block = int(control.get("block_size", 8))
+        if h % block != 0 or w % block != 0:
+            raise ValueError(f"block_shuffle requires D0 H/W divisible by block_size={block}, got {(h, w)}")
+        bh, bw = h // block, w // block
+        blocks = d0.reshape(c, bh, block, bw, block).transpose(1, 3, 0, 2, 4).reshape(bh * bw, c, block, block)
+        perm = rng.permutation(bh * bw)
+        shuffled = blocks[perm].reshape(bh, bw, c, block, block).transpose(2, 0, 3, 1, 4).reshape(c, h, w)
+        out["decoder_semantic_map"] = np.ascontiguousarray(shuffled)
+    elif mode == "channel_shuffle":
+        perm = rng.permutation(c)
+        out["decoder_semantic_map"] = np.ascontiguousarray(d0[perm])
+    elif mode == "channel_sign_shuffle":
+        perm = rng.permutation(c)
+        signs = rng.choice(np.asarray([-1.0, 1.0], dtype=np.float32), size=(c, 1, 1))
+        out["decoder_semantic_map"] = np.ascontiguousarray(d0[perm] * signs)
+    else:
+        raise ValueError(f"Unsupported decoder_map_control.mode={mode!r}")
+    return out
 
 
 def _make_fixed_visual(*, sample, pred, out_dir, epoch, variant, seed, dice, iou):
@@ -129,6 +248,55 @@ def _make_fixed_visual(*, sample, pred, out_dir, epoch, variant, seed, dice, iou
     return panel_path
 
 
+def _write_final_visual_package(*, extractor, head, samples, resize_hw, device, threshold, out_dir, variant, seed, feature_control=None) -> Path:
+    package_dir = out_dir / "visuals" / "final_epoch_all_test"
+    package_dir.mkdir(parents=True, exist_ok=True)
+    manifest = []
+    for sample in samples:
+        pred = _predict_sample(
+            extractor=extractor,
+            head=head,
+            sample=sample,
+            resize_hw=resize_hw,
+            device=device,
+            threshold=threshold,
+            feature_control=feature_control,
+            seed=seed,
+        )
+        image = sample.image.convert("RGB")
+        gt = np.asarray(sample.texture_a_mask, dtype=bool)
+        sample_dir = package_dir / str(sample.crop_name)
+        sample_dir.mkdir(parents=True, exist_ok=True)
+        image.save(sample_dir / "input.png")
+        render_gt_overlay(image, gt).save(sample_dir / "gt_overlay.png")
+        render_single_mask_overlay(image, pred, color=(230, 56, 70)).save(sample_dir / "pred_overlay.png")
+        Image.fromarray(binary_error_map(pred, gt)).save(sample_dir / "error_map.png")
+        compose_strip([
+            np.asarray(image, dtype=np.uint8),
+            np.asarray(render_gt_overlay(image, gt), dtype=np.uint8),
+            np.asarray(render_single_mask_overlay(image, pred, color=(230, 56, 70)), dtype=np.uint8),
+            binary_error_map(pred, gt),
+        ]).save(sample_dir / "panel.png")
+        metrics = compute_binary_metrics(pred, gt)
+        manifest.append({
+            "sample_id": str(sample.crop_name),
+            "eval_split": "test",
+            "dice": float(metrics.dice),
+            "iou": float(metrics.iou),
+            "pred_area": int(pred.sum()),
+            "gt_area": int(gt.sum()),
+            "panel": str((sample_dir / "panel.png").resolve()),
+        })
+    (package_dir / "manifest.json").write_text(json.dumps({
+        "variant": variant,
+        "seed": int(seed),
+        "eval_split": "test",
+        "count": len(manifest),
+        "samples": manifest,
+    }, indent=2, sort_keys=True))
+    return package_dir
+
+
 def _probe_backbone_channels(extractor, sample, resize_hw):
     img = _resize_image(sample.image, resize_hw)
     _, pyramid_np = extractor.extract_sam_pyramid(img)
@@ -136,7 +304,15 @@ def _probe_backbone_channels(extractor, sample, resize_hw):
     for level, key in [("fpn_2", "f2_channels"), ("fpn_1", "f1_channels"), ("fpn_0", "f0_channels")]:
         if level in pyramid_np:
             defaults[key] = int(pyramid_np[level].shape[0])
+    if "decoder_semantic_map" in pyramid_np:
+        defaults["decoder_map_channels"] = int(pyramid_np["decoder_semantic_map"].shape[0])
     return defaults
+
+
+def _probe_feature_map_shapes(extractor, sample, resize_hw) -> dict[str, list[int]]:
+    img = _resize_image(sample.image, resize_hw)
+    _, pyramid_np = extractor.extract_sam_pyramid(img)
+    return {name: [int(v) for v in fmap.shape] for name, fmap in pyramid_np.items()}
 
 
 def _build_head(variant: str, channels: dict, method_config: dict) -> torch.nn.Module:
@@ -157,9 +333,185 @@ def _build_head(variant: str, channels: dict, method_config: dict) -> torch.nn.M
     elif variant == "final_staged_a2":
         kwargs["alpha_init"] = float(model_cfg.get("alpha_init", 0.05))
         kwargs["final_layer_zero_init"] = bool(model_cfg.get("final_layer_zero_init", True))
+    elif variant == "d0_linear":
+        kwargs = {"decoder_map_channels": int(channels["decoder_map_channels"])}
+    elif variant == "d0_small_head":
+        kwargs = {"decoder_map_channels": int(channels["decoder_map_channels"])}
+    elif variant == "fpn_plus_d0":
+        kwargs.pop("f0_channels", None)
+        kwargs["decoder_map_channels"] = int(channels["decoder_map_channels"])
+        kwargs["memory_tokens"] = int(model_cfg.get("memory_tokens", 4))
+    elif variant == "d0_fpn_fusion":
+        kwargs["decoder_map_channels"] = int(channels["decoder_map_channels"])
+        kwargs["projection_dim"] = int(model_cfg.get("projection_dim", 64))
+    elif variant == "d0_f0_fusion":
+        kwargs = {
+            "f0_channels": int(channels["f0_channels"]),
+            "decoder_map_channels": int(channels["decoder_map_channels"]),
+            "projection_dim": int(model_cfg.get("projection_dim", 64)),
+        }
+    elif variant in {"d0_f1_fusion", "d0_f2_fusion", "d0_f0_f1_fusion", "d0_f1_f2_fusion", "d0_f0_f2_fusion"}:
+        source_key_map = {
+            "d0_f1_fusion": ("fpn_1",),
+            "d0_f2_fusion": ("fpn_2",),
+            "d0_f0_f1_fusion": ("fpn_0", "fpn_1"),
+            "d0_f1_f2_fusion": ("fpn_1", "fpn_2"),
+            "d0_f0_f2_fusion": ("fpn_0", "fpn_2"),
+        }
+        channel_key_map = {
+            "fpn_0": "f0_channels",
+            "fpn_1": "f1_channels",
+            "fpn_2": "f2_channels",
+        }
+        source_keys = source_key_map[variant]
+        source_channels = {"decoder_semantic_map": int(channels["decoder_map_channels"])}
+        for key in source_keys:
+            source_channels[key] = int(channels[channel_key_map[key]])
+        kwargs = {
+            "source_channels": source_channels,
+            "source_keys": ("decoder_semantic_map", *source_keys),
+            "projection_dim": int(model_cfg.get("projection_dim", 64)),
+        }
     kwargs.pop("decoder_dim", None)
     kwargs["decoder_dim"] = int(model_cfg.get("decoder_dim", 128))
     return build_head(variant, **kwargs)
+
+
+def _head_param_count(head: torch.nn.Module) -> int:
+    return int(sum(p.numel() for p in head.parameters() if p.requires_grad))
+
+
+def _feature_sources_for_variant(variant: str) -> list[str]:
+    mapping = {
+        "a0_fpn2": ["fpn_2"],
+        "a2_fpn2_fpn1_refine": ["fpn_2", "fpn_1"],
+        "a3_memory": ["fpn_2", "fpn_1"],
+        "a5_all_at_once": ["fpn_2", "fpn_1", "fpn_0"],
+        "final_staged": ["fpn_2", "fpn_1", "fpn_0"],
+        "final_staged_a2": ["fpn_2", "fpn_1", "fpn_0"],
+        "d0_linear": ["decoder_semantic_map"],
+        "d0_small_head": ["decoder_semantic_map"],
+        "fpn_plus_d0": ["decoder_semantic_map", "fpn_2", "fpn_1"],
+        "d0_fpn_fusion": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0_f0_fusion": ["decoder_semantic_map", "fpn_0"],
+        "d0_f1_fusion": ["decoder_semantic_map", "fpn_1"],
+        "d0_f2_fusion": ["decoder_semantic_map", "fpn_2"],
+        "d0_f0_f1_fusion": ["decoder_semantic_map", "fpn_0", "fpn_1"],
+        "d0_f1_f2_fusion": ["decoder_semantic_map", "fpn_1", "fpn_2"],
+        "d0_f0_f2_fusion": ["decoder_semantic_map", "fpn_0", "fpn_2"],
+    }
+    return mapping.get(variant, [])
+
+
+def _normalize_features_chw(feature: np.ndarray) -> np.ndarray:
+    flat = feature.reshape(feature.shape[0], -1).T
+    flat = flat / (np.linalg.norm(flat, axis=1, keepdims=True) + 1e-8)
+    return flat.T.reshape(feature.shape)
+
+
+def _cosine_similarity_map(feature_chw: np.ndarray, mask_hw: np.ndarray) -> np.ndarray:
+    feat = _normalize_features_chw(feature_chw)
+    flat = feat.reshape(feat.shape[0], -1).T
+    mask = np.asarray(mask_hw, dtype=bool).reshape(-1)
+    if not mask.any():
+        return np.zeros(feature_chw.shape[-2:], dtype=np.float32)
+    proto = flat[mask].mean(axis=0)
+    proto = proto / (np.linalg.norm(proto) + 1e-8)
+    return np.asarray(flat @ proto, dtype=np.float32).reshape(feature_chw.shape[-2:])
+
+
+def _boundary_energy(feature_chw: np.ndarray) -> np.ndarray:
+    d_y = np.linalg.norm(feature_chw[:, 1:, :] - feature_chw[:, :-1, :], axis=0)
+    d_x = np.linalg.norm(feature_chw[:, :, 1:] - feature_chw[:, :, :-1], axis=0)
+    out = np.zeros(feature_chw.shape[-2:], dtype=np.float32)
+    out[:-1, :] += d_y
+    out[:, :-1] += d_x
+    return out
+
+
+def _semantic_coherence_for_sample(*, decoder_map: np.ndarray, gt: np.ndarray, pred: np.ndarray, boundary: np.ndarray) -> dict:
+    feat_t = torch.from_numpy(np.ascontiguousarray(decoder_map)).float().unsqueeze(0)
+    feat_up = F.interpolate(feat_t, size=gt.shape, mode="bilinear", align_corners=False)[0].numpy()
+    fg_sim = _cosine_similarity_map(feat_up, gt)
+    bg_sim = _cosine_similarity_map(feat_up, ~gt)
+    margin = fg_sim - bg_sim
+    proto_pred = margin >= 0.0
+    proto_metrics = compute_binary_metrics(proto_pred, gt)
+    boundary_energy = _boundary_energy(feat_up)
+    gt_boundary = np.asarray(boundary, dtype=bool)
+    non_boundary = ~gt_boundary
+    flat = _normalize_features_chw(feat_up).reshape(feat_up.shape[0], -1).T
+    pred_flat = np.asarray(pred, dtype=bool).reshape(-1)
+    pred_intra = float("nan")
+    if int(pred_flat.sum()) > 1:
+        pred_vectors = flat[pred_flat]
+        pred_proto = pred_vectors.mean(axis=0)
+        pred_proto = pred_proto / (np.linalg.norm(pred_proto) + 1e-8)
+        pred_intra = float((pred_vectors @ pred_proto).mean())
+    try:
+        from sklearn.metrics import roc_auc_score
+
+        proto_auc = float(roc_auc_score(gt.reshape(-1).astype(np.uint8), margin.reshape(-1)))
+    except Exception:
+        proto_auc = float("nan")
+    return {
+        "fg_bg_gap": float(fg_sim[gt].mean() - fg_sim[~gt].mean()),
+        "proto_auc": proto_auc,
+        "proto_margin_dice": float(proto_metrics.dice),
+        "proto_margin_iou": float(proto_metrics.iou),
+        "pred_intra_cosine": pred_intra,
+        "boundary_contrast": float(boundary_energy[gt_boundary].mean() - boundary_energy[non_boundary].mean()),
+    }
+
+
+def _write_semantic_coherence_diagnostics(*, extractor, head, samples, resize_hw, device, threshold, out_dir: Path, feature_control=None, seed: int = 0) -> dict:
+    rows = []
+    for index, sample in enumerate(samples):
+        image = _resize_image(sample.image, resize_hw)
+        _, pyramid_np = extractor.extract_sam_pyramid(image)
+        pyramid_np = _apply_decoder_map_control(
+            pyramid_np,
+            sample_id=str(sample.crop_name),
+            seed=seed,
+            control=feature_control,
+        )
+        decoder_map = pyramid_np.get("decoder_semantic_map")
+        if decoder_map is None:
+            return {}
+        tensors = {
+            k: torch.from_numpy(np.ascontiguousarray(v)).float().unsqueeze(0).to(device)
+            for k, v in pyramid_np.items()
+        }
+        with torch.inference_mode():
+            logits = head(tensors)
+            logits_up = F.interpolate(logits, size=sample.texture_a_mask.shape, mode="bilinear", align_corners=False)
+            pred = (torch.sigmoid(logits_up)[0, 0].detach().cpu().numpy() > threshold)
+        gt = np.asarray(sample.texture_a_mask, dtype=bool)
+        row = {
+            "sample_index": index,
+            "sample_id": str(sample.crop_name),
+            "eval_split": "test",
+            **_semantic_coherence_for_sample(
+                decoder_map=decoder_map,
+                gt=gt,
+                pred=pred,
+                boundary=np.asarray(sample.boundary_mask, dtype=bool),
+            ),
+        }
+        rows.append(row)
+    csv_path = out_dir / "eval" / "semantic_coherence.csv"
+    fieldnames = list(rows[0].keys()) if rows else []
+    with csv_path.open("w") as handle:
+        handle.write(",".join(fieldnames) + "\n")
+        for row in rows:
+            handle.write(",".join(str(row[key]) for key in fieldnames) + "\n")
+    means = {
+        key: float(np.nanmean([float(row[key]) for row in rows]))
+        for key in ["fg_bg_gap", "proto_auc", "proto_margin_dice", "proto_margin_iou", "pred_intra_cosine", "boundary_contrast"]
+    }
+    payload = {"eval_split": "test", "rows": len(rows), "csv": str(csv_path.resolve()), "mean": means}
+    (out_dir / "eval" / "semantic_coherence_summary.json").write_text(json.dumps(payload, indent=2, sort_keys=True))
+    return payload
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -176,6 +528,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-wandb-failure", action="store_true", default=True)
     parser.add_argument("--limit-train", type=int, default=None)
     parser.add_argument("--limit-test", type=int, default=None)
+    parser.add_argument("--max-epochs", type=int, default=None)
     args = parser.parse_args(argv)
 
     set_seed(args.seed)
@@ -195,9 +548,19 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"Unknown variant {variant!r}. Known: {sorted(_ALL_VARIANTS)}")
 
     training_cfg = config.get("training", {})
+    evaluation_cfg = config.get("evaluation", {})
+    logging_cfg = config.get("logging", {})
+    feature_control = config.get("feature_control", {})
     stage1_epochs = int(training_cfg.get("stage1_epochs", 40))
     stage2_epochs = int(training_cfg.get("stage2_epochs", 0))
+    if args.max_epochs is not None:
+        stage1_epochs = min(stage1_epochs, int(args.max_epochs))
+        if stage1_epochs < int(training_cfg.get("stage1_epochs", 40)):
+            stage2_epochs = 0
     total_epochs = stage1_epochs + stage2_epochs
+    eval_every = max(1, int(evaluation_cfg.get("eval_every", 1)))
+    visual_every = max(1, int(logging_cfg.get("visual_every", total_epochs)))
+    log_visuals_to_wandb = bool(logging_cfg.get("log_visuals_to_wandb", True))
     is_two_stage = variant in _TWO_STAGE_VARIANTS and stage2_epochs > 0
 
     aug_policy = str(config.get("dataset", {}).get("augmentation_policy", "none")).lower()
@@ -209,11 +572,31 @@ def main(argv: list[str] | None = None) -> int:
     (out_dir / "visuals").mkdir(exist_ok=True)
     (out_dir / "wandb").mkdir(exist_ok=True)
 
-    # Save config and run metadata
-    (out_dir / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False))
+    # Save config and run metadata. Keep config.yaml for legacy readers, and
+    # resolved_config.yaml for the locked test-screen artifact contract.
+    resolved_config_text = yaml.safe_dump(config, sort_keys=False)
+    (out_dir / "config.yaml").write_text(resolved_config_text)
+    (out_dir / "resolved_config.yaml").write_text(resolved_config_text)
 
-    # Load data — full training set, no val holdout
-    train_samples = list(iter_monuseg_binary_samples(split="train"))
+    # Load data — full training set, no val holdout. For this semantic-map
+    # batch, "full" means all 37 HF train rows, including the 7 tissue==0 rows.
+    train_selection_policy = str(
+        config.get("dataset", {}).get(
+            "train_selection_policy",
+            "official_challenge_train_excludes_tissue_0_unknown",
+        )
+    )
+    include_extra_train_unknown = train_selection_policy in {
+        "hf_train_all_37",
+        "hf_train_all_37_includes_tissue_0_unknown",
+        "full_37",
+    }
+    train_samples = list(
+        iter_monuseg_binary_samples(
+            split="train",
+            include_extra_train_unknown=include_extra_train_unknown,
+        )
+    )
     test_samples = list(iter_monuseg_binary_samples(split="test"))
     if args.limit_train is not None:
         train_samples = train_samples[:args.limit_train]
@@ -225,6 +608,11 @@ def main(argv: list[str] | None = None) -> int:
         "train_split": "train",
         "eval_split": "test",
         "note": "MoNuSeg has no real validation set. No val holdout. Test used for ablation screening.",
+        "train_selection_policy": (
+            "hf_train_all_37_includes_tissue_0_unknown"
+            if include_extra_train_unknown
+            else "official_challenge_train_excludes_tissue_0_unknown"
+        ),
         "train_sample_ids": [str(s.crop_name) for s in train_samples],
         "test_sample_ids": [str(s.crop_name) for s in test_samples],
         "train_count": len(train_samples),
@@ -237,16 +625,31 @@ def main(argv: list[str] | None = None) -> int:
 
     device = torch.device("cuda" if (args.device in {"auto", "cuda"} and torch.cuda.is_available()) else "cpu")
     sam_cfg = config.get("sam", {})
+    prompt_cfg = _prompt_cfg(config)
+    prompt_mode = str(prompt_cfg.get("mode", "fixed_full_image_box"))
     hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN")
-    extractor = build_frozen_sam_pyramid_extractor(
-        model_id=str(sam_cfg.get("model_id", "facebook/sam3")),
-        device=args.device,
-        hf_token=hf_token,
-    )
+    if _is_learned_prompt_mode(config):
+        extractor = LearnedPromptedSam3(
+            model_id=str(sam_cfg.get("model_id", "facebook/sam3")),
+            device=args.device,
+            hf_token=hf_token,
+            prompt_mode=prompt_mode,
+            sparse_num_tokens=int(prompt_cfg.get("num_tokens", 4)),
+            sparse_init_std=float(prompt_cfg.get("init_std", 0.02)),
+        )
+    else:
+        extractor = build_frozen_sam_pyramid_extractor(
+            model_id=str(sam_cfg.get("model_id", "facebook/sam3")),
+            device=args.device,
+            hf_token=hf_token,
+            include_decoder_semantic_map=bool(sam_cfg.get("include_decoder_semantic_map", False)),
+            decoder_prompt_mode=str(sam_cfg.get("decoder_prompt_mode", "full_image_box")),
+        )
 
     # Probe and log feature shapes
     probe_sample = train_samples[0]
     actual_channels = _probe_backbone_channels(extractor, probe_sample, resize_hw)
+    probed_feature_map_shapes = _probe_feature_map_shapes(extractor, probe_sample, resize_hw)
     backbone_backend = "unknown"
     if hasattr(extractor, "_bundle") and extractor._bundle is not None:
         backbone_backend = extractor._bundle[0] if isinstance(extractor._bundle[0], str) else "official"
@@ -258,6 +661,27 @@ def main(argv: list[str] | None = None) -> int:
         "f2_channels": actual_channels.get("f2_channels"),
         "f1_channels": actual_channels.get("f1_channels"),
         "f0_channels": actual_channels.get("f0_channels"),
+        "decoder_map_channels": actual_channels.get("decoder_map_channels"),
+        "decoder_semantic_map_enabled": bool(sam_cfg.get("include_decoder_semantic_map", False)),
+        "decoder_prompt_mode": prompt_mode,
+        "decoder_semantic_map_source": str(sam_cfg.get("decoder_semantic_map_source", "")),
+        "feature_control": feature_control,
+        "prompt_config": prompt_cfg,
+        "original_image_size_hw": [int(probe_sample.image.height), int(probe_sample.image.width)],
+        "sam_input_size_hw": list(resize_hw) if resize_hw else [int(probe_sample.image.height), int(probe_sample.image.width)],
+        "feature_map_shapes_chw": probed_feature_map_shapes,
+        "d0_shape_chw": probed_feature_map_shapes.get("decoder_semantic_map"),
+        "final_readout_feature_resolution_hw": (
+            probed_feature_map_shapes.get("decoder_semantic_map", [None, None, None])[1:]
+        ),
+        "output_mask_resolution_hw": [
+            int(np.asarray(probe_sample.texture_a_mask).shape[0]),
+            int(np.asarray(probe_sample.texture_a_mask).shape[1]),
+        ],
+        "postprocess_eval_resolution_hw": [
+            int(np.asarray(probe_sample.texture_a_mask).shape[0]),
+            int(np.asarray(probe_sample.texture_a_mask).shape[1]),
+        ],
         "expected_paper_channels": {"f2_channels": 256, "f1_channels": 64, "f0_channels": 32},
         "channel_parity_ok": (
             actual_channels.get("f2_channels") == 256
@@ -266,20 +690,30 @@ def main(argv: list[str] | None = None) -> int:
         ),
     }
     (out_dir / "feature_shapes.json").write_text(json.dumps(feature_shapes, indent=2, sort_keys=True))
+    (out_dir / "prompt_config.json").write_text(json.dumps(prompt_cfg, indent=2, sort_keys=True))
     print(f"[info] feature_shapes: {feature_shapes}", flush=True)
 
     head = _build_head(variant, actual_channels, method_config).to(device)
+    head_param_count = _head_param_count(head)
+    prompt_param_count = int(extractor.prompt_parameter_count()) if isinstance(extractor, LearnedPromptedSam3) else 0
+    feature_sources = _feature_sources_for_variant(variant)
     if is_two_stage:
         head.set_f0_enabled(False)  # stage 1: inner head only
 
     lr_schedule = str(training_cfg.get("lr_schedule", "constant")).lower()
     lr_min = float(training_cfg.get("lr_min", 0.0))
 
+    optim_params = [p for p in head.parameters() if p.requires_grad]
+    if isinstance(extractor, LearnedPromptedSam3):
+        optim_params.extend([p for p in extractor.parameters() if p.requires_grad])
     optimizer = torch.optim.AdamW(
-        [p for p in head.parameters() if p.requires_grad],
+        optim_params,
         lr=float(training_cfg.get("lr", 1e-4)),
         weight_decay=float(training_cfg.get("weight_decay", 1e-4)),
     )
+    checkpoint_module = torch.nn.ModuleDict({"head": head})
+    if isinstance(extractor, LearnedPromptedSam3):
+        checkpoint_module["prompt_model"] = extractor
 
     def _make_scheduler(opt: torch.optim.Optimizer, n_epochs: int) -> "torch.optim.lr_scheduler._LRScheduler | None":
         if lr_schedule == "cosine":
@@ -318,13 +752,26 @@ def main(argv: list[str] | None = None) -> int:
                 "f2_channels": feature_shapes["f2_channels"],
                 "f1_channels": feature_shapes["f1_channels"],
                 "f0_channels": feature_shapes["f0_channels"],
+                "decoder_map_channels": feature_shapes["decoder_map_channels"],
+                "decoder_semantic_map_enabled": feature_shapes["decoder_semantic_map_enabled"],
+                "decoder_prompt_mode": feature_shapes["decoder_prompt_mode"],
+                "prompt_mode": prompt_mode,
+                "prompt_config": prompt_cfg,
+                "feature_sources": feature_sources,
                 "stage1_epochs": stage1_epochs,
                 "stage2_epochs": stage2_epochs,
+                "eval_every": eval_every,
+                "visual_every": visual_every,
                 "augmentation_policy": aug_policy,
                 "augmentation_description": describe_augmentation_policy(aug_policy),
+                "train_selection_policy": split_manifest["train_selection_policy"],
                 "train_count": len(train_samples),
                 "test_count": len(test_samples),
                 "config_path": str(Path(args.config).resolve()),
+                "head_param_count": head_param_count,
+                "prompt_param_count": prompt_param_count,
+                "feature_sources": feature_sources,
+                "feature_control": feature_control,
             },
         )
         wandb_url = str(wandb_run.url)
@@ -349,8 +796,41 @@ def main(argv: list[str] | None = None) -> int:
             "run_name": args.run_name, "variant": variant, "seed": int(args.seed),
             "eval_split": "test", "stage": "TEST_SCREEN",
             "backbone_backend": backbone_backend,
+            "head_param_count": head_param_count,
+            "prompt_param_count": prompt_param_count,
+            "feature_sources": feature_sources,
+            "feature_control": feature_control,
+            "train_selection_policy": split_manifest["train_selection_policy"],
+            "prompt_mode": prompt_mode,
+            "prompt_config": prompt_cfg,
         },
     )
+
+    prompt_stats_csv = out_dir / "prompt_stats.csv"
+    prompt_stats_csv.write_text(
+        "epoch,prompt_mode,prompt_trainable,prompt_num_tokens,prompt_dim,prompt_param_count,prompt_norm,prompt_delta_norm,prompt_cosine_from_init\n"
+    )
+    if isinstance(extractor, LearnedPromptedSam3):
+        prompt_smoke = {
+            "trainability": {
+                "sam_trainable_param_count": 0,
+                "head_trainable_param_count": head_param_count,
+                "prompt_trainable_param_count": prompt_param_count,
+                "optimizer_param_count": int(sum(p.numel() for group in optimizer.param_groups for p in group["params"])),
+            },
+            "constant_prompt": extractor.prompt_state_summary(),
+            "no_gt_leakage": {
+                "uses_gt_mask_prompt": False,
+                "uses_gt_box_prompt": False,
+                "uses_gt_point_prompt": False,
+                "uses_text_from_labels": False,
+                "uses_prediction_prompt_at_test": False,
+                "uses_test_time_adaptation": False,
+            },
+        }
+        if prompt_mode == "fixed_full_image_box_plus_learned_delta":
+            prompt_smoke["equivalence"] = extractor.compare_against_reference(_resize_image(probe_sample.image, resize_hw))
+        (out_dir / "prompt_smoke_checks.json").write_text(json.dumps(prompt_smoke, indent=2, sort_keys=True))
 
     # -----------------------------------------------------------------------
     # Training loop
@@ -360,10 +840,15 @@ def main(argv: list[str] | None = None) -> int:
     best_test_epoch = -1
     final_epoch_dice = float("nan")
     final_epoch_iou = float("nan")
-    best_ckpt = out_dir / "checkpoint.pt"
+    final_eval_result = None
+    final_ckpt = out_dir / "checkpoint.pt"
+    best_ckpt = out_dir / "checkpoint_best.pt"
     latest_ckpt = out_dir / "checkpoint_last.pt"
-    per_epoch_csv = out_dir / "eval" / "per_epoch_metrics.csv"
-    per_epoch_csv.write_text("epoch,stage,train_loss,lr,test_dice,test_iou,is_best\n")
+    per_epoch_csv = out_dir / "per_epoch_metrics.csv"
+    per_epoch_eval_csv = out_dir / "eval" / "per_epoch_metrics.csv"
+    per_epoch_header = "epoch,stage,train_loss,lr,test_dice,test_iou,is_best\n"
+    per_epoch_csv.write_text(per_epoch_header)
+    per_epoch_eval_csv.write_text(per_epoch_header)
 
     for epoch in range(1, total_epochs + 1):
         # Two-stage transition
@@ -371,61 +856,116 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[{args.run_name}] Stage 2: enabling F0 residual at epoch {epoch}", flush=True)
             head.set_f0_enabled(True)
             # Re-init optimizer to include new F0 params
+            optim_params = [p for p in head.parameters() if p.requires_grad]
+            if isinstance(extractor, LearnedPromptedSam3):
+                optim_params.extend([p for p in extractor.parameters() if p.requires_grad])
             optimizer = torch.optim.AdamW(
-                [p for p in head.parameters() if p.requires_grad],
+                optim_params,
                 lr=float(training_cfg.get("lr", 1e-4)),
                 weight_decay=float(training_cfg.get("weight_decay", 1e-4)),
             )
             scheduler = _make_scheduler(optimizer, stage2_epochs)
 
-        train_stream = _streaming_feature_iter(
-            extractor, train_samples, resize_hw,
-            aug_policy=aug_policy, rng=aug_rng,
-        )
-        train_stats = train_one_epoch(
-            model=head, dataset=train_stream, optimizer=optimizer,
-            loss_fn=bce_dice_loss, device=device,
-        )
+        if isinstance(extractor, LearnedPromptedSam3):
+            train_stats = _train_one_epoch_prompted(
+                prompt_model=extractor,
+                head=head,
+                samples=train_samples,
+                resize_hw=resize_hw,
+                aug_policy=aug_policy,
+                rng=aug_rng,
+                optimizer=optimizer,
+                loss_fn=bce_dice_loss,
+                device=device,
+            )
+        else:
+            train_stream = _streaming_feature_iter(
+                extractor, train_samples, resize_hw,
+                aug_policy=aug_policy, rng=aug_rng,
+                feature_control=feature_control,
+                seed=args.seed,
+            )
+            train_stats = train_one_epoch(
+                model=head, dataset=train_stream, optimizer=optimizer,
+                loss_fn=bce_dice_loss, device=device,
+            )
 
-        # Evaluate on official test split every epoch
-        test_result = run_official_eval(
-            extractor=extractor, head=head, samples=test_samples,
-            device=device, threshold=threshold, resize_before_sam_hw=resize_hw,
-        )
-        test_dice = float(test_result.dice)
-        test_iou = float(test_result.iou)
+        should_eval = (epoch == 1) or (epoch % eval_every == 0) or (epoch == total_epochs)
+        test_dice = float("nan")
+        test_iou = float("nan")
+        test_result = None
+        if should_eval:
+            test_result = run_official_eval(
+                extractor=extractor, head=head, samples=test_samples,
+                device=device, threshold=threshold, resize_before_sam_hw=resize_hw,
+                pyramid_transform=lambda sample_id, pyramid: _apply_decoder_map_control(
+                    pyramid,
+                    sample_id=str(sample_id),
+                    seed=args.seed,
+                    control=feature_control,
+                ),
+            )
+            test_dice = float(test_result.dice)
+            test_iou = float(test_result.iou)
+            if epoch == total_epochs:
+                final_eval_result = test_result
 
         lr = float(optimizer.param_groups[0]["lr"])
-        save_checkpoint(latest_ckpt, model=head, optimizer=optimizer, epoch=epoch)
-        if test_dice > best_test_dice:
+        save_checkpoint(latest_ckpt, model=checkpoint_module, optimizer=optimizer, epoch=epoch)
+        if should_eval and test_dice > best_test_dice:
             best_test_dice = test_dice
             best_test_iou = test_iou
             best_test_epoch = epoch
-            save_checkpoint(best_ckpt, model=head, optimizer=optimizer, epoch=epoch)
-        final_epoch_dice = test_dice
-        final_epoch_iou = test_iou
+            save_checkpoint(best_ckpt, model=checkpoint_module, optimizer=optimizer, epoch=epoch)
+        if should_eval:
+            final_epoch_dice = test_dice
+            final_epoch_iou = test_iou
+        if epoch == total_epochs:
+            save_checkpoint(final_ckpt, model=checkpoint_module, optimizer=optimizer, epoch=epoch)
         if scheduler is not None:
             scheduler.step()
 
         stage_label = "stage1" if (is_two_stage and epoch <= stage1_epochs) else ("stage2" if is_two_stage else "train")
 
         # Append to per-epoch CSV (no buffering — readable mid-run)
-        with per_epoch_csv.open("a") as _f:
-            _f.write(f"{epoch},{stage_label},{train_stats['loss']:.6f},{lr:.8f},{test_dice:.6f},{test_iou:.6f},{int(epoch == best_test_epoch)}\n")
+        per_epoch_row = (
+            f"{epoch},{stage_label},{train_stats['loss']:.6f},{lr:.8f},"
+            f"{test_dice:.6f},{test_iou:.6f},{int(should_eval and epoch == best_test_epoch)}\n"
+        )
+        for csv_path in (per_epoch_csv, per_epoch_eval_csv):
+            with csv_path.open("a") as _f:
+                _f.write(per_epoch_row)
 
-        # Fixed visual for this epoch
-        pred = _predict_sample(
-            extractor=extractor, head=head, sample=fixed_visual_sample,
-            resize_hw=resize_hw, device=device, threshold=threshold,
-        )
-        panel_path = _make_fixed_visual(
-            sample=fixed_visual_sample, pred=pred, out_dir=out_dir,
-            epoch=epoch, variant=variant, seed=args.seed,
-            dice=test_dice, iou=test_iou,
-        )
+        panel_path = None
+        should_visualize = should_eval and ((epoch % visual_every == 0) or (epoch == total_epochs))
+        if should_visualize:
+            pred = _predict_sample(
+                extractor=extractor, head=head, sample=fixed_visual_sample,
+                resize_hw=resize_hw, device=device, threshold=threshold,
+                feature_control=feature_control, seed=args.seed,
+            )
+            panel_path = _make_fixed_visual(
+                sample=fixed_visual_sample, pred=pred, out_dir=out_dir,
+                epoch=epoch, variant=variant, seed=args.seed,
+                dice=test_dice, iou=test_iou,
+            )
         alpha_val = None
         if is_two_stage and epoch > stage1_epochs and hasattr(head, "alpha") and head.alpha is not None:
             alpha_val = float(torch.sigmoid(head.alpha).item())
+        prompt_log_dict = {}
+        if isinstance(extractor, LearnedPromptedSam3):
+            prompt_log_dict = extractor.prompt_state_summary()
+            with prompt_stats_csv.open("a") as handle:
+                handle.write(
+                    f"{epoch},{prompt_log_dict.get('prompt_mode','')},"
+                    f"{int(bool(prompt_log_dict.get('prompt_trainable', False)))},"
+                    f"{prompt_log_dict.get('prompt_num_tokens', 0)},"
+                    f"{prompt_log_dict.get('prompt_dim', 0)},"
+                    f"{prompt_log_dict.get('prompt_param_count', 0)},"
+                    f"{prompt_log_dict.get('prompt_norm', float('nan'))},"
+                    f"{prompt_log_dict.get('prompt_delta_norm', float('nan'))},"
+                    f"{prompt_log_dict.get('prompt_cosine_from_init', float('nan'))}\n"
+                )
 
         if wandb_run is not None:
             try:
@@ -434,36 +974,87 @@ def main(argv: list[str] | None = None) -> int:
                     "epoch": epoch,
                     "train/loss": float(train_stats["loss"]),
                     "train/lr": lr,
-                    "test/dice": test_dice,
-                    "test/iou": test_iou,
                     "provenance/eval_split": "test",
                     "provenance/stage": stage_label,
-                    "test/sample_segmentation": wandb_mod.Image(
+                }
+                if should_eval:
+                    log_dict["test/dice"] = test_dice
+                    log_dict["test/iou"] = test_iou
+                if log_visuals_to_wandb and panel_path is not None:
+                    log_dict["test/sample_segmentation"] = wandb_mod.Image(
                         np.asarray(Image.open(panel_path)),
                         caption=(
                             f"{args.run_name} | epoch={epoch} | split=test "
                             f"| sample={fixed_visual_sample.crop_name} "
                             f"| dice={test_dice:.4f} | iou={test_iou:.4f} | variant={variant} | seed={args.seed}"
                         ),
-                    ),
-                }
+                    )
                 if alpha_val is not None:
                     log_dict["model/alpha"] = alpha_val
+                for key, value in prompt_log_dict.items():
+                    if isinstance(value, (int, float, bool)):
+                        log_dict[f"prompt/{key}"] = value
                 wandb_run.log(log_dict)
             except Exception as exc:
                 print(f"[warn] wandb logging failed at epoch {epoch}: {exc}", file=sys.stderr)
 
         print(
             f"[{args.run_name}] epoch {epoch}/{total_epochs} ({stage_label}) "
-            f"loss={train_stats['loss']:.4f} test_dice={test_dice:.4f} test_iou={test_iou:.4f}",
+            f"loss={train_stats['loss']:.4f}"
+            + (f" test_dice={test_dice:.4f} test_iou={test_iou:.4f}" if should_eval else " test=skipped"),
             flush=True,
         )
 
     # -----------------------------------------------------------------------
     # Save final artifacts
     # -----------------------------------------------------------------------
-    best_sha = _sha256(best_ckpt)
-    (out_dir / "checkpoint_sha256.txt").write_text(best_sha + "\n")
+    semantic_coherence = _write_semantic_coherence_diagnostics(
+        extractor=extractor,
+        head=head,
+        samples=test_samples,
+        resize_hw=resize_hw,
+        device=device,
+        threshold=threshold,
+        out_dir=out_dir,
+        feature_control=feature_control,
+        seed=args.seed,
+    )
+    final_visuals_path = _write_final_visual_package(
+        extractor=extractor,
+        head=head,
+        samples=test_samples,
+        resize_hw=resize_hw,
+        device=device,
+        threshold=threshold,
+        out_dir=out_dir,
+        variant=variant,
+        seed=args.seed,
+        feature_control=feature_control,
+    )
+    if final_eval_result is not None:
+        write_per_sample_csv(out_dir / "eval" / "per_sample_final_epoch.csv", final_eval_result.per_sample_records)
+    final_sha = _sha256(final_ckpt)
+    best_sha = _sha256(best_ckpt) if best_ckpt.exists() else ""
+    (out_dir / "checkpoint_sha256.txt").write_text(final_sha + "\n")
+    prompt_reload_ok = None
+    if isinstance(extractor, LearnedPromptedSam3):
+        before = {
+            key: value.detach().cpu().clone()
+            for key, value in extractor.state_dict().items()
+        }
+        reloaded = torch.nn.ModuleDict({"head": _build_head(variant, actual_channels, method_config).to(device)})
+        reloaded["prompt_model"] = LearnedPromptedSam3(
+            model_id=str(sam_cfg.get("model_id", "facebook/sam3")),
+            device=args.device,
+            hf_token=hf_token,
+            prompt_mode=prompt_mode,
+            sparse_num_tokens=int(prompt_cfg.get("num_tokens", 4)),
+            sparse_init_std=float(prompt_cfg.get("init_std", 0.02)),
+        )
+        reloaded["prompt_model"].prompt_spec()
+        load_checkpoint(final_ckpt, model=reloaded, map_location=str(device), strict=False)
+        after = {key: value.detach().cpu().clone() for key, value in reloaded["prompt_model"].state_dict().items()}
+        prompt_reload_ok = all(torch.equal(before[key], after[key]) for key in before)
 
     test_summary = {
         "dataset": "monuseg",
@@ -478,6 +1069,18 @@ def main(argv: list[str] | None = None) -> int:
         "lr_min": lr_min,
         "augmentation_policy": aug_policy,
         "augmentation_description": describe_augmentation_policy(aug_policy),
+        "train_selection_policy": split_manifest["train_selection_policy"],
+        "eval_every": eval_every,
+        "visual_every": visual_every,
+        "checkpoint_selection": "final_epoch",
+        "head_param_count": head_param_count,
+        "prompt_param_count": prompt_param_count,
+        "prompt_mode": prompt_mode,
+        "prompt_config_path": str((out_dir / "prompt_config.json").resolve()),
+        "prompt_stats_path": str(prompt_stats_csv.resolve()),
+        "prompt_reload_ok": prompt_reload_ok,
+        "feature_control": feature_control,
+        "feature_sources": feature_sources,
         "checkpoint_views": {
             "final_epoch": {
                 "selected_by": "final_epoch",
@@ -485,6 +1088,8 @@ def main(argv: list[str] | None = None) -> int:
                 "claimability": "claimable_test_screen",
                 "test_dice": final_epoch_dice,
                 "test_iou": final_epoch_iou,
+                "checkpoint_path": str(final_ckpt.resolve()),
+                "checkpoint_sha256": final_sha,
             },
             "best_test_epoch": {
                 "selected_by": "test_peak",
@@ -504,12 +1109,19 @@ def main(argv: list[str] | None = None) -> int:
         "final_epoch_iou": final_epoch_iou,
         "best_test_epoch": best_test_epoch,
         "config_path": str(Path(args.config).resolve()),
+        "resolved_config_path": str((out_dir / "resolved_config.yaml").resolve()),
         "split_manifest_path": str((out_dir / "split_manifest.json").resolve()),
         "train_count": len(train_samples),
         "test_count": len(test_samples),
         "backbone_backend": backbone_backend,
         "channel_parity_ok": feature_shapes["channel_parity_ok"],
         "paper_headline_safe": feature_shapes["paper_headline_safe"],
+        "decoder_semantic_map_enabled": feature_shapes["decoder_semantic_map_enabled"],
+        "decoder_prompt_mode": feature_shapes["decoder_prompt_mode"],
+        "semantic_coherence": semantic_coherence,
+        "feature_shapes_path": str((out_dir / "feature_shapes.json").resolve()),
+        "feature_sources": feature_sources,
+        "visuals_path": str(final_visuals_path.resolve()),
     }
     (out_dir / "eval" / "test_metrics.json").write_text(json.dumps(test_summary, indent=2, sort_keys=True))
 
@@ -526,11 +1138,21 @@ def main(argv: list[str] | None = None) -> int:
             wandb_run.summary.update({
                 "test/dice": best_test_dice,
                 "test/iou": best_test_iou,
+                "test/final_dice": final_epoch_dice,
+                "test/final_iou": final_epoch_iou,
                 "test/eval_split": "test",
-                "checkpoint_sha256": best_sha,
+                "checkpoint_sha256": final_sha,
                 "channel_parity_ok": feature_shapes["channel_parity_ok"],
                 "backbone_backend": backbone_backend,
+                "decoder_semantic_map_enabled": feature_shapes["decoder_semantic_map_enabled"],
+                "head_param_count": head_param_count,
+                "prompt_param_count": prompt_param_count,
+                "prompt_mode": prompt_mode,
+                "feature_sources": feature_sources,
             })
+            if semantic_coherence:
+                for key, value in semantic_coherence.get("mean", {}).items():
+                    wandb_run.summary[f"semantic/{key}"] = value
             wandb_run.finish()
         except Exception as exc:
             print(f"[warn] wandb finish failed: {exc}", file=sys.stderr)
