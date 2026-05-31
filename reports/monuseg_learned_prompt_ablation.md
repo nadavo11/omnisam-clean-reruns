@@ -31,6 +31,16 @@ Smoke evidence:
 - Sparse smoke W&B: `https://wandb.ai/nadavoteam/frozen-sam-readout/runs/1is23kf5`
 
 Key smoke checks:
+- Learned prompt insertion point:
+  - category: `sparse`
+  - tensor name: `geometry_encoder.geo_feats`
+  - tensor shape: `[2, 1, 256]`
+  - trainable parameter shape: `[1, 1, 256]`
+  - parameter count: `256`
+  - initialized from: `fixed_full_image_box_geo_prompt + zero residual delta`
+  - shared across images: `yes`
+  - image-conditioned: `no`
+  - GT-derived: `no`
 - Zero-delta equivalence against legacy fixed-box D0:
   - `max_abs_diff = 0.0`
   - `mean_abs_diff = 0.0`

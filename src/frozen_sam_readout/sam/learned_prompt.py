@@ -19,6 +19,8 @@ from .feature_extractor import (
 @dataclass
 class Sam3PromptSpec:
     mode: str
+    category: str = "sparse"
+    tensor_name: str = ""
     shared_across_images: bool = True
     image_conditioned: bool = False
     gt_derived: bool = False
@@ -52,8 +54,10 @@ class LearnedPromptedSam3(torch.nn.Module):
         self.transform = None
         self.register_parameter("learned_sparse_tokens", None)
         self.register_parameter("learned_delta", None)
+        self.register_parameter("learned_text_tokens", None)
         self._spec: Optional[Sam3PromptSpec] = None
         self._initial_prompt_snapshot: Optional[torch.Tensor] = None
+        self._last_insertion_metadata: dict[str, Any] = {}
 
     @property
     def device(self) -> torch.device:
@@ -73,6 +77,8 @@ class LearnedPromptedSam3(torch.nn.Module):
         spec = self.prompt_spec()
         payload = {
             "prompt_mode": spec.mode,
+            "prompt_category": spec.category,
+            "prompt_tensor_name": spec.tensor_name,
             "prompt_trainable": bool(spec.trainable),
             "prompt_num_tokens": int(spec.prompt_num_tokens),
             "prompt_dim": int(spec.prompt_dim),
@@ -82,6 +88,7 @@ class LearnedPromptedSam3(torch.nn.Module):
             "prompt_image_conditioned": bool(spec.image_conditioned),
             "prompt_gt_derived": bool(spec.gt_derived),
         }
+        payload.update(self._last_insertion_metadata)
         if self.learned_sparse_tokens is not None:
             prompt = self.learned_sparse_tokens.detach()
             payload["prompt_norm"] = float(prompt.norm().item())
@@ -94,6 +101,12 @@ class LearnedPromptedSam3(torch.nn.Module):
             if self._initial_prompt_snapshot is not None:
                 init = self._initial_prompt_snapshot.to(delta.device)
                 payload["prompt_cosine_from_init"] = self._safe_cosine(delta, init)
+        if self.learned_text_tokens is not None:
+            prompt = self.learned_text_tokens.detach()
+            payload["prompt_norm"] = float(prompt.norm().item())
+            if self._initial_prompt_snapshot is not None:
+                init = self._initial_prompt_snapshot.to(prompt.device)
+                payload["prompt_cosine_from_init"] = self._safe_cosine(prompt, init)
         return payload
 
     @staticmethod
@@ -208,6 +221,8 @@ class LearnedPromptedSam3(torch.nn.Module):
         if self.prompt_mode == "fixed_full_image_box":
             self._spec = Sam3PromptSpec(
                 mode=self.prompt_mode,
+                category="sparse",
+                tensor_name="geometry_encoder.geo_feats",
                 trainable=False,
                 prompt_init="fixed_full_image_box",
                 prompt_dim=prompt_dim,
@@ -222,6 +237,8 @@ class LearnedPromptedSam3(torch.nn.Module):
             self.learned_sparse_tokens = param
             self._spec = Sam3PromptSpec(
                 mode=self.prompt_mode,
+                category="sparse",
+                tensor_name="visual_prompt_embed",
                 trainable=True,
                 prompt_init=f"normal(0,{self.sparse_init_std})",
                 prompt_num_tokens=self.sparse_num_tokens,
@@ -234,12 +251,31 @@ class LearnedPromptedSam3(torch.nn.Module):
             self.learned_delta = param
             self._spec = Sam3PromptSpec(
                 mode=self.prompt_mode,
+                category="sparse",
+                tensor_name="geometry_encoder.geo_feats",
                 trainable=True,
                 prompt_init="zeros",
                 prompt_num_tokens=1,
                 prompt_dim=prompt_dim,
             )
             self._initial_prompt_snapshot = self.learned_delta.detach().clone()
+            return
+        if self.prompt_mode == "fixed_full_image_box_plus_learned_text_soft_prompt":
+            param = torch.nn.Parameter(
+                torch.empty(self.sparse_num_tokens, 1, prompt_dim, device=self.device)
+            )
+            torch.nn.init.normal_(param, mean=0.0, std=self.sparse_init_std)
+            self.learned_text_tokens = param
+            self._spec = Sam3PromptSpec(
+                mode=self.prompt_mode,
+                category="text",
+                tensor_name="language_features_soft_prompt_tokens",
+                trainable=True,
+                prompt_init=f"normal(0,{self.sparse_init_std})",
+                prompt_num_tokens=self.sparse_num_tokens,
+                prompt_dim=prompt_dim,
+            )
+            self._initial_prompt_snapshot = self.learned_text_tokens.detach().clone()
             return
         raise ValueError(f"Unsupported prompt_mode={self.prompt_mode!r}")
 
@@ -316,12 +352,52 @@ class LearnedPromptedSam3(torch.nn.Module):
             )
             prompt = torch.cat([txt_feats, visual_prompt_embed], dim=0)
             prompt_mask = torch.cat([txt_masks, visual_prompt_mask], dim=1)
+            self._last_insertion_metadata = {
+                "prompt_tensor_shape": list(visual_prompt_embed.shape),
+                "prompt_trainable_shape": list(learned.shape),
+                "prompt_spatial_or_token": "token",
+                "prompt_initialized_from": f"normal(0,{self.sparse_init_std})",
+            }
+            return prompt, prompt_mask, backbone_out
+
+        if self.prompt_mode == "fixed_full_image_box_plus_learned_text_soft_prompt":
+            learned = self.learned_text_tokens
+            assert learned is not None
+            batch_size = int(txt_feats.shape[1])
+            text_soft_prompt = learned.expand(-1, batch_size, -1)
+            text_soft_mask = torch.zeros(
+                batch_size,
+                text_soft_prompt.shape[0],
+                dtype=txt_masks.dtype,
+                device=txt_masks.device,
+            )
+            prompt = torch.cat([txt_feats, text_soft_prompt, geo_feats], dim=0)
+            prompt_mask = torch.cat([txt_masks, text_soft_mask, geo_masks], dim=1)
+            self._last_insertion_metadata = {
+                "prompt_tensor_shape": list(text_soft_prompt.shape),
+                "prompt_trainable_shape": list(learned.shape),
+                "prompt_spatial_or_token": "token",
+                "prompt_initialized_from": f"normal(0,{self.sparse_init_std})",
+            }
             return prompt, prompt_mask, backbone_out
 
         if self.prompt_mode == "fixed_full_image_box_plus_learned_delta":
             delta = self.learned_delta
             assert delta is not None
             geo_feats = geo_feats + delta.expand(geo_feats.shape[0], geo_feats.shape[1], -1)
+            self._last_insertion_metadata = {
+                "prompt_tensor_shape": list(geo_feats.shape),
+                "prompt_trainable_shape": list(delta.shape),
+                "prompt_spatial_or_token": "token",
+                "prompt_initialized_from": "fixed_full_image_box_geo_prompt + zero residual delta",
+            }
+        else:
+            self._last_insertion_metadata = {
+                "prompt_tensor_shape": list(geo_feats.shape),
+                "prompt_trainable_shape": [],
+                "prompt_spatial_or_token": "token",
+                "prompt_initialized_from": "fixed_full_image_box",
+            }
 
         prompt = torch.cat([txt_feats, geo_feats], dim=0)
         prompt_mask = torch.cat([txt_masks, geo_masks], dim=1)

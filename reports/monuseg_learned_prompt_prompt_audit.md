@@ -1,23 +1,28 @@
-# MoNuSeg Learned Prompt Audit
+# MoNuSeg Learned Prompt Type Audit
 
-Current audit scope:
-- local smoke only
-- no multi-seed production runs yet
-- no seed-0 post-training D0 visual audit yet
+Insertion-point classification used in this batch:
+- `FPNplusD0_box_plus_learned_delta_aug80`: `sparse`
+- `FPNplusD0_learned_sparse_prompt_aug80`: `sparse`
+- `FPNplusD0_box_plus_learned_text_soft_prompt_aug80_s0`: `text`
+- `post-decoder`: not used
 
-Smoke audit summary:
-- Preferred delta mode is numerically identical to the legacy fixed-box D0 path at init:
+Prompt-type audit table:
+
+| variant | prompt_category | tensor_name | tensor_shape | trainable_shape | prompt_param_count | spatial_or_token | shared_across_images | image_conditioned | gt_derived | initialized_from | notes |
+| --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- | --- | --- |
+| `FPNplusD0_box_plus_learned_delta_aug80` | `sparse` | `geometry_encoder.geo_feats` | `[2, 1, 256]` | `[1, 1, 256]` | 256 | `token` | yes | no | no | `fixed_full_image_box_geo_prompt + zero residual delta` | delta is broadcast across the 2 box-derived geometry tokens |
+| `FPNplusD0_learned_sparse_prompt_aug80` | `sparse` | `visual_prompt_embed` | `[4, 1, 256]` | `[4, 1, 256]` | 1024 | `token` | yes | no | no | `normal(0,0.02)` | constant learned task tokens concatenated into prompt sequence |
+| `FPNplusD0_box_plus_learned_text_soft_prompt_aug80_s0` | `text` | `language_features_soft_prompt_tokens` | `[4, 1, 256]` | `[4, 1, 256]` | 1024 | `token` | yes | no | no | `normal(0,0.02)` | exploratory seed-0 text-side soft prompt concatenated after fixed text tokens |
+
+Required zero-delta equivalence check:
+- variant: `FPNplusD0_box_plus_learned_delta_aug80`
+- category: `sparse`
+- result:
   - `max_abs_diff = 0.0`
   - `mean_abs_diff = 0.0`
   - `cosine_similarity = 1.000601053237915`
-- Sparse learned prompt initializes as a constant trainable token bank:
-  - tokens: `4`
-  - dim: `256`
-  - params: `1024`
-- Delta learned prompt initializes as a constant broadcast residual:
-  - tokens: `1`
-  - dim: `256`
-  - params: `256`
 
-Blocked next step:
-- full seed-0 and multi-seed RunAI jobs could not be submitted from this host because the RunAI API endpoint at `127.0.0.1:8080` was unreachable.
+Interpretation:
+- The preferred `box_plus_learned_delta` implementation is a true sparse/token prompt ablation.
+- It modifies prompt-token embeddings before the SAM3 grounding encoder/decoder stack.
+- It does not modify `D0` directly, so it is not a post-decoder feature hack.

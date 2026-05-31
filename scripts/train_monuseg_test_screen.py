@@ -118,7 +118,11 @@ def _prompt_cfg(config: dict) -> dict:
 
 def _is_learned_prompt_mode(config: dict) -> bool:
     mode = str(_prompt_cfg(config).get("mode", "fixed_full_image_box"))
-    return mode in {"learned_constant_sparse", "fixed_full_image_box_plus_learned_delta"}
+    return mode in {
+        "learned_constant_sparse",
+        "fixed_full_image_box_plus_learned_delta",
+        "fixed_full_image_box_plus_learned_text_soft_prompt",
+    }
 
 
 def _train_one_epoch_prompted(
@@ -722,6 +726,7 @@ def main(argv: list[str] | None = None) -> int:
 
     scheduler = _make_scheduler(optimizer, stage1_epochs if is_two_stage else total_epochs)
     threshold = float(config.get("evaluation", {}).get("threshold", 0.5))
+    prompt_insertion_note = extractor.prompt_state_summary() if isinstance(extractor, LearnedPromptedSam3) else None
 
     # Fixed test visual sample (first test sample, consistent across epochs)
     fixed_visual_sample = test_samples[0]
@@ -757,6 +762,7 @@ def main(argv: list[str] | None = None) -> int:
                 "decoder_prompt_mode": feature_shapes["decoder_prompt_mode"],
                 "prompt_mode": prompt_mode,
                 "prompt_config": prompt_cfg,
+                "prompt_insertion_point": prompt_insertion_note,
                 "feature_sources": feature_sources,
                 "stage1_epochs": stage1_epochs,
                 "stage2_epochs": stage2_epochs,
@@ -818,7 +824,18 @@ def main(argv: list[str] | None = None) -> int:
                 "prompt_trainable_param_count": prompt_param_count,
                 "optimizer_param_count": int(sum(p.numel() for group in optimizer.param_groups for p in group["params"])),
             },
-            "constant_prompt": extractor.prompt_state_summary(),
+            "constant_prompt": prompt_insertion_note,
+            "insertion_point": {
+                "category": prompt_insertion_note.get("prompt_category"),
+                "tensor_name": prompt_insertion_note.get("prompt_tensor_name"),
+                "tensor_shape": prompt_insertion_note.get("prompt_tensor_shape"),
+                "trainable_parameter_shape": prompt_insertion_note.get("prompt_trainable_shape"),
+                "parameter_count": prompt_insertion_note.get("prompt_param_count"),
+                "initialized_from": prompt_insertion_note.get("prompt_initialized_from", prompt_insertion_note.get("prompt_init")),
+                "shared_across_images": prompt_insertion_note.get("prompt_shared_across_images"),
+                "image_conditioned": prompt_insertion_note.get("prompt_image_conditioned"),
+                "gt_derived": prompt_insertion_note.get("prompt_gt_derived"),
+            },
             "no_gt_leakage": {
                 "uses_gt_mask_prompt": False,
                 "uses_gt_box_prompt": False,
@@ -831,6 +848,7 @@ def main(argv: list[str] | None = None) -> int:
         if prompt_mode == "fixed_full_image_box_plus_learned_delta":
             prompt_smoke["equivalence"] = extractor.compare_against_reference(_resize_image(probe_sample.image, resize_hw))
         (out_dir / "prompt_smoke_checks.json").write_text(json.dumps(prompt_smoke, indent=2, sort_keys=True))
+        (out_dir / "prompt_insertion_point.json").write_text(json.dumps(prompt_smoke["insertion_point"], indent=2, sort_keys=True))
 
     # -----------------------------------------------------------------------
     # Training loop
@@ -1078,6 +1096,8 @@ def main(argv: list[str] | None = None) -> int:
         "prompt_mode": prompt_mode,
         "prompt_config_path": str((out_dir / "prompt_config.json").resolve()),
         "prompt_stats_path": str(prompt_stats_csv.resolve()),
+        "prompt_insertion_point_path": str((out_dir / "prompt_insertion_point.json").resolve()) if prompt_insertion_note is not None else "",
+        "prompt_insertion_point": prompt_insertion_note,
         "prompt_reload_ok": prompt_reload_ok,
         "feature_control": feature_control,
         "feature_sources": feature_sources,
@@ -1150,6 +1170,9 @@ def main(argv: list[str] | None = None) -> int:
                 "prompt_mode": prompt_mode,
                 "feature_sources": feature_sources,
             })
+            if prompt_insertion_note is not None:
+                for key, value in prompt_insertion_note.items():
+                    wandb_run.summary[f"prompt/{key}"] = value
             if semantic_coherence:
                 for key, value in semantic_coherence.get("mean", {}).items():
                     wandb_run.summary[f"semantic/{key}"] = value

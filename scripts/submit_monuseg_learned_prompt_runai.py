@@ -15,6 +15,7 @@ VARIANTS = {
     "FPNplusD0_learned_sparse_prompt_aug80": "configs/test_screen_learned_prompt/fpnplusd0_learned_sparse_prompt_aug80.yaml",
     "FPNplusD0_box_plus_learned_delta_aug80": "configs/test_screen_learned_prompt/fpnplusd0_box_plus_learned_delta_aug80.yaml",
     "D0small_box_plus_learned_delta_aug80": "configs/test_screen_learned_prompt/d0small_box_plus_learned_delta_aug80.yaml",
+    "FPNplusD0_box_plus_learned_text_soft_prompt_aug80_s0": "configs/test_screen_learned_prompt/fpnplusd0_box_plus_learned_text_soft_prompt_aug80_s0.yaml",
 }
 
 JOB_SLUGS = {
@@ -22,6 +23,7 @@ JOB_SLUGS = {
     "FPNplusD0_learned_sparse_prompt_aug80": "monuseg-lprompt-fpnd0-sparse",
     "FPNplusD0_box_plus_learned_delta_aug80": "monuseg-lprompt-fpnd0-delta",
     "D0small_box_plus_learned_delta_aug80": "monuseg-lprompt-d0small-delta",
+    "FPNplusD0_box_plus_learned_text_soft_prompt_aug80_s0": "monuseg-lprompt-fpnd0-textsoft",
 }
 
 
