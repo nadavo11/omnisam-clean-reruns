@@ -1,0 +1,40 @@
+{
+  "date": "2026-05-31",
+  "branch": "codex/clean-e1-runai-wandb",
+  "commit": "58284ce",
+  "delta_smoke": {
+    "output_dir": "/home/nada/PycharmProjects/omniSAM/outputs/smoke_learned_prompt_delta_s0",
+    "wandb_url": "https://wandb.ai/nadavoteam/frozen-sam-readout/runs/faxm13zk",
+    "equivalence": {
+      "max_abs_diff": 0.0,
+      "mean_abs_diff": 0.0,
+      "cosine_similarity": 1.000601053237915
+    },
+    "prompt": {
+      "mode": "fixed_full_image_box_plus_learned_delta",
+      "prompt_dim": 256,
+      "prompt_param_count": 256,
+      "shared_across_images": true,
+      "image_conditioned": false,
+      "gt_derived": false
+    }
+  },
+  "sparse_smoke": {
+    "output_dir": "/home/nada/PycharmProjects/omniSAM/outputs/smoke_learned_prompt_sparse_s0",
+    "wandb_url": "https://wandb.ai/nadavoteam/frozen-sam-readout/runs/1is23kf5",
+    "prompt": {
+      "mode": "learned_constant_sparse",
+      "prompt_num_tokens": 4,
+      "prompt_dim": 256,
+      "prompt_param_count": 1024,
+      "shared_across_images": true,
+      "image_conditioned": false,
+      "gt_derived": false
+    }
+  },
+  "runai_submission": {
+    "script": "/home/nada/PycharmProjects/omniSAM/scripts/submit_monuseg_learned_prompt_runai.py",
+    "status": "blocked",
+    "error": "Get \"http://localhost:8080/api/v1/namespaces?labelSelector=runai%2Fqueue%3Davidan\": dial tcp 127.0.0.1:8080: connect: connection refused"
+  }
+}
