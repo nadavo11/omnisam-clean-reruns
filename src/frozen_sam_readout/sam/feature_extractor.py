@@ -62,6 +62,8 @@ def build_frozen_sam_pyramid_extractor(
     device: str = "auto",
     hf_token: Optional[str] = None,
     official_checkpoint_path: Optional[str] = None,
+    include_decoder_semantic_map: bool = False,
+    decoder_prompt_mode: str = "full_image_box",
 ) -> FrozenSamPyramidExtractor:
     """Create a frozen SAM pyramid extractor.
 
@@ -89,6 +91,8 @@ def build_frozen_sam_pyramid_extractor(
         device=device,
         hf_token=hf_token,
         official_checkpoint_path=official_checkpoint_path,
+        include_decoder_semantic_map=include_decoder_semantic_map,
+        decoder_prompt_mode=decoder_prompt_mode,
     )
 
 
@@ -235,11 +239,15 @@ class _Sam3PyramidExtractor:
         device: str = "auto",
         hf_token: Optional[str] = None,
         official_checkpoint_path: Optional[str] = None,
+        include_decoder_semantic_map: bool = False,
+        decoder_prompt_mode: str = "full_image_box",
     ) -> None:
         self.model_id = str(model_id)
         self.requested_device = str(device)
         self.hf_token = hf_token
         self.official_checkpoint_path = official_checkpoint_path
+        self.include_decoder_semantic_map = bool(include_decoder_semantic_map)
+        self.decoder_prompt_mode = str(decoder_prompt_mode)
         self._bundle: Optional[Tuple] = None  # ("official"|"transformers", torch, ...)
         self._using_official_backend: bool = False
 
@@ -258,15 +266,59 @@ class _Sam3PyramidExtractor:
         _, torch_module, model, processor = bundle
         # Mirrors source repo: Sam3Runner._ensure_official_backend path.
         # processor.set_image populates backbone_fpn via the official SAM-3 forward.
-        with torch_module.inference_mode():
-            state = processor.set_image(rgb, state={})
+        try:
+            model_device = str(next(model.parameters()).device)
+        except StopIteration:
+            model_device = str(getattr(model, "device", ""))
+        autocast_enabled = model_device.startswith("cuda")
+        captured_decoder_maps = []
+
+        def _capture_decoder_map(_module: Any, _inputs: Tuple[Any, ...], output: Any) -> None:
+            captured_decoder_maps.append(output.detach().cpu().to(torch_module.float32))
+
+        hook_handle = None
+        pixel_decoder = getattr(getattr(model, "segmentation_head", None), "pixel_decoder", None)
+        if self.include_decoder_semantic_map:
+            if pixel_decoder is None:
+                raise FrozenSamPyramidExtractorRuntimeError(
+                    "Official SAM-3 model does not expose segmentation_head.pixel_decoder."
+                )
+            hook_handle = pixel_decoder.register_forward_hook(_capture_decoder_map)
+        try:
+            with torch_module.inference_mode(), torch_module.autocast(
+                device_type="cuda",
+                dtype=torch_module.bfloat16,
+                enabled=autocast_enabled,
+            ):
+                state = processor.set_image(rgb, state={})
+                if self.include_decoder_semantic_map:
+                    if self.decoder_prompt_mode == "full_image_box":
+                        state = processor.add_geometric_prompt([0.5, 0.5, 1.0, 1.0], True, state)
+                    elif self.decoder_prompt_mode == "null_prompt":
+                        state = processor.set_text_prompt("visual", state)
+                    else:
+                        raise FrozenSamPyramidExtractorRuntimeError(
+                            f"Unsupported decoder_prompt_mode={self.decoder_prompt_mode!r}."
+                        )
+        finally:
+            if hook_handle is not None:
+                hook_handle.remove()
         backbone_out = state.get("backbone_out", {})
         fpn_outputs = backbone_out.get("backbone_fpn")
         if fpn_outputs is None:
             raise FrozenSamPyramidExtractorRuntimeError(
                 "Official SAM-3 processor did not populate 'backbone_fpn' in backbone_out."
             )
-        return self._pack_fpn(fpn_outputs, torch_module, rgb)
+        image_size, pyramid = self._pack_fpn(fpn_outputs, torch_module, rgb)
+        if self.include_decoder_semantic_map:
+            if not captured_decoder_maps:
+                raise FrozenSamPyramidExtractorRuntimeError(
+                    "SAM-3 pixel decoder hook did not capture a decoder semantic map."
+                )
+            decoder_map = captured_decoder_maps[-1]
+            arr = decoder_map[0] if decoder_map.ndim == 4 else decoder_map
+            pyramid["decoder_semantic_map"] = np.asarray(arr.numpy(), dtype=np.float32)
+        return image_size, pyramid
 
     def _extract_transformers(
         self, rgb: Image.Image, bundle: Tuple
