@@ -57,6 +57,7 @@ def run_official_eval(
     device: torch.device,
     threshold: float = 0.5,
     resize_before_sam_hw: tuple[int, int] | None = None,
+    pyramid_transform: Any | None = None,
 ) -> OfficialEvalResult:
     """Run frozen SAM feature extraction + head forward pass + binary metrics.
 
@@ -87,6 +88,8 @@ def run_official_eval(
                 inp = image
 
             _, pyramid_np = extractor.extract_sam_pyramid(inp)
+            if pyramid_transform is not None:
+                pyramid_np = pyramid_transform(sample_id, pyramid_np)
             pyramid_t = _pyramid_to_tensors(pyramid_np, device)
             logits = head(pyramid_t)  # [1, 1, h, w]
             pred_res_seen = f"{logits.shape[-2]}x{logits.shape[-1]}"
