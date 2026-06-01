@@ -14,44 +14,52 @@ PROJECT = "avidan"
 WANDB_PROJECT = "frozen-sam-readout"
 WANDB_GROUP = "monuseg_d0fpn_task_spatial_residual_aug80"
 OUTPUT_ROOT = "/storage/nada/outputs/monuseg_d0fpn_task_spatial_residual_batch"
-CODE_ROOT = "/storage/nada/monuseg_d0fpn_task_spatial_residual_code"
-REPO_DIR_NAME = "omnisam-clean-reruns.git"
+CODE_ROOT = "/storage/nada/taskspatial_code"
 REPO_GIT = "https://github.com/nadavo11/omnisam-clean-reruns.git"
 REPO_BRANCH = "codex/clean-e1-runai-wandb"
+REPO_DIR_NAME = "omnisam-clean-reruns.git"
 
 
-VARIANTS: dict[str, tuple[str, str]] = {
+VARIANTS: dict[str, tuple[str, str, str]] = {
     "task_tokens_film_spatial_after": (
         "configs/test_screen_task_spatial_residual/monuseg_task_tokens_film_spatial_after_aug80.yaml",
         "Task tokens FiLM then spatial attention",
+        "d0fpn_task_tokens_film_spatial_after",
     ),
     "spatial_before_task_tokens_film": (
         "configs/test_screen_task_spatial_residual/monuseg_spatial_before_task_tokens_film_aug80.yaml",
         "Spatial attention then task tokens FiLM",
+        "d0fpn_spatial_before_task_tokens_film",
     ),
     "task_conditioned_spatial_attention": (
         "configs/test_screen_task_spatial_residual/monuseg_task_conditioned_spatial_attention_aug80.yaml",
         "Task-conditioned spatial attention",
+        "d0fpn_task_conditioned_spatial_attention",
     ),
     "residual_task_spatial_delta": (
         "configs/test_screen_task_spatial_residual/monuseg_residual_task_spatial_delta_aug80.yaml",
         "Residual task-spatial refinement branch",
+        "d0fpn_residual_task_spatial_delta",
     ),
     "logit_residual_task_spatial": (
         "configs/test_screen_task_spatial_residual/monuseg_logit_residual_task_spatial_aug80.yaml",
         "Logit-level task-spatial correction",
+        "d0fpn_logit_residual_task_spatial",
     ),
     "dual_skip_task_spatial_fusion": (
         "configs/test_screen_task_spatial_residual/monuseg_dual_skip_task_spatial_fusion_aug80.yaml",
         "Dual skip task-spatial fusion",
+        "d0fpn_dual_skip_task_spatial_fusion",
     ),
     "source_spatial_gates_task_tokens": (
         "configs/test_screen_task_spatial_residual/monuseg_source_spatial_gates_task_tokens_aug80.yaml",
         "Task-token source-specific spatial gates",
+        "d0fpn_source_spatial_gates_task_tokens",
     ),
     "f0_boundary_spatial_task_refine": (
         "configs/test_screen_task_spatial_residual/monuseg_f0_boundary_spatial_task_refine_aug80.yaml",
         "F0 boundary-focused task-spatial refinement",
+        "d0fpn_f0_boundary_spatial_task_refine",
     ),
 }
 
@@ -70,12 +78,11 @@ def submit_job(
 ) -> None:
     if variant not in VARIANTS:
         raise SystemExit(f"Unknown variant {variant!r}. Valid: {sorted(VARIANTS)}")
-    config_path, human_name = VARIANTS[variant]
+    config_path, human_name, trainer_variant = VARIANTS[variant]
     job_name = f"monuseg-taskspatial-{variant.replace('_', '-')}-s{seed}"
     run_name = f"monuseg_taskspatial_{variant}_s{seed}"
     output_dir = _output_dir(variant, seed)
     repo_target = f"{CODE_ROOT}/{REPO_DIR_NAME}"
-
     job_cmd = (
         "set -euo pipefail; "
         "if [ -f /storage/nada/envs/texture-representations-runai-cu128/bin/activate ]; then "
@@ -88,7 +95,7 @@ def submit_job(
         "export PYTHONPATH=src; "
         "python scripts/train_monuseg_test_screen.py "
         f"--config {config_path} "
-        f"--variant {variant} "
+        f"--variant {trainer_variant} "
         f"--seed {seed} "
         f"--run-name {run_name} "
         f"--output-dir {output_dir} "

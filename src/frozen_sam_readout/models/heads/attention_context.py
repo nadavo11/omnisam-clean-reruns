@@ -1056,9 +1056,9 @@ class F0BoundarySpatialTaskRefineHead(_ResidualAttentionContextFusionBase):
         self.f0_channel_gate = nn.Linear(self.decoder_dim, self.projection_dim)
         self.f0_spatial_gate = nn.Conv2d(2, 1, kernel_size=7, padding=3)
         self.f0_refine = nn.Sequential(
-            ConvBNReLU(self.projection_dim, self.projection_dim),
-            ConvBNReLU(self.projection_dim, self.projection_dim),
-            nn.Conv2d(self.projection_dim, self.projection_dim, kernel_size=1),
+            ConvBNReLU(self.decoder_dim, self.decoder_dim),
+            ConvBNReLU(self.decoder_dim, self.decoder_dim),
+            nn.Conv2d(self.decoder_dim, self.decoder_dim, kernel_size=1),
         )
         nn.init.zeros_(self.f0_channel_gate.weight)
         nn.init.zeros_(self.f0_channel_gate.bias)
