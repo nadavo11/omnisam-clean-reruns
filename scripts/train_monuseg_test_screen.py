@@ -71,6 +71,14 @@ _SINGLE_STAGE_VARIANTS = {
     "d0fpn_task_tokens_film",
     "d0fpn_window_selfattn",
     "d0fpn_global_context_nonlocal",
+    "d0fpn_task_tokens_film_spatial_after",
+    "d0fpn_spatial_before_task_tokens_film",
+    "d0fpn_task_conditioned_spatial_attention",
+    "d0fpn_residual_task_spatial_delta",
+    "d0fpn_logit_residual_task_spatial",
+    "d0fpn_dual_skip_task_spatial_fusion",
+    "d0fpn_source_spatial_gates_task_tokens",
+    "d0fpn_f0_boundary_spatial_task_refine",
 }
 _TWO_STAGE_VARIANTS = {"final_staged", "final_staged_a2"}
 _ALL_VARIANTS = _SINGLE_STAGE_VARIANTS | _TWO_STAGE_VARIANTS
@@ -393,6 +401,14 @@ def _build_head(variant: str, channels: dict, method_config: dict) -> torch.nn.M
         "d0fpn_task_tokens_film",
         "d0fpn_window_selfattn",
         "d0fpn_global_context_nonlocal",
+        "d0fpn_task_tokens_film_spatial_after",
+        "d0fpn_spatial_before_task_tokens_film",
+        "d0fpn_task_conditioned_spatial_attention",
+        "d0fpn_residual_task_spatial_delta",
+        "d0fpn_logit_residual_task_spatial",
+        "d0fpn_dual_skip_task_spatial_fusion",
+        "d0fpn_source_spatial_gates_task_tokens",
+        "d0fpn_f0_boundary_spatial_task_refine",
     }:
         source_channels = {
             "decoder_semantic_map": int(channels["decoder_map_channels"]),
@@ -425,6 +441,20 @@ def _build_head(variant: str, channels: dict, method_config: dict) -> torch.nn.M
             kwargs["num_heads"] = int(model_cfg.get("num_heads", 4))
             kwargs["query_hw"] = int(model_cfg.get("query_hw", 16))
             kwargs["context_hw"] = int(model_cfg.get("context_hw", 8))
+        elif variant in {
+            "d0fpn_task_tokens_film_spatial_after",
+            "d0fpn_spatial_before_task_tokens_film",
+            "d0fpn_task_conditioned_spatial_attention",
+            "d0fpn_residual_task_spatial_delta",
+            "d0fpn_logit_residual_task_spatial",
+            "d0fpn_dual_skip_task_spatial_fusion",
+            "d0fpn_source_spatial_gates_task_tokens",
+            "d0fpn_f0_boundary_spatial_task_refine",
+        }:
+            kwargs["num_tokens"] = int(model_cfg.get("num_tokens", 4))
+            kwargs["num_heads"] = int(model_cfg.get("num_heads", 4))
+            kwargs["pool_hw"] = int(model_cfg.get("pool_hw", 16))
+            kwargs["alpha_init"] = float(model_cfg.get("alpha_init", 0.05))
     kwargs.pop("decoder_dim", None)
     kwargs["decoder_dim"] = int(model_cfg.get("decoder_dim", 128))
     return build_head(variant, **kwargs)
@@ -460,6 +490,14 @@ def _feature_sources_for_variant(variant: str) -> list[str]:
         "d0fpn_task_tokens_film": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
         "d0fpn_window_selfattn": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
         "d0fpn_global_context_nonlocal": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_task_tokens_film_spatial_after": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_spatial_before_task_tokens_film": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_task_conditioned_spatial_attention": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_residual_task_spatial_delta": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_logit_residual_task_spatial": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_dual_skip_task_spatial_fusion": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_source_spatial_gates_task_tokens": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_f0_boundary_spatial_task_refine": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
     }
     return mapping.get(variant, [])
 
@@ -813,6 +851,12 @@ def main(argv: list[str] | None = None) -> int:
                 variant,
                 f"seed{args.seed}",
             ]
+            if "task" in attention_type or "tokens" in attention_type:
+                wandb_tags.append("task_tokens")
+            if "spatial" in attention_type:
+                wandb_tags.append("spatial_attention")
+            if any(token in attention_type for token in ("residual", "skip", "delta", "correction")):
+                wandb_tags.append("residual_skip")
         wandb_run = wandb.init(
             project=args.wandb_project,
             group=args.wandb_group,
@@ -822,6 +866,7 @@ def main(argv: list[str] | None = None) -> int:
             config={
                 "run_name": args.run_name,
                 "variant": variant,
+                "variant_label": str(config.get("model", {}).get("variant_label", "")),
                 "seed": int(args.seed),
                 "eval_split": "test",
                 "stage": "TEST_SCREEN",
@@ -875,15 +920,19 @@ def main(argv: list[str] | None = None) -> int:
         out_dir,
         config={"config": config},
         extras={
-                "run_name": args.run_name, "variant": variant, "seed": int(args.seed),
-                "eval_split": "test", "stage": "TEST_SCREEN",
-                "backbone_backend": backbone_backend,
-                "head_param_count": head_param_count,
-                "head_class_name": head_class_name,
-                "attention_type": attention_type,
-                "prompt_param_count": prompt_param_count,
-                "feature_sources": feature_sources,
-                "feature_control": feature_control,
+            "run_name": args.run_name,
+            "variant": variant,
+            "variant_label": str(config.get("model", {}).get("variant_label", "")),
+            "seed": int(args.seed),
+            "eval_split": "test",
+            "stage": "TEST_SCREEN",
+            "backbone_backend": backbone_backend,
+            "head_param_count": head_param_count,
+            "head_class_name": head_class_name,
+            "attention_type": attention_type,
+            "prompt_param_count": prompt_param_count,
+            "feature_sources": feature_sources,
+            "feature_control": feature_control,
             "train_selection_policy": split_manifest["train_selection_policy"],
             "prompt_mode": prompt_mode,
             "prompt_config": prompt_cfg,
@@ -1046,8 +1095,13 @@ def main(argv: list[str] | None = None) -> int:
                 dice=test_dice, iou=test_iou,
             )
         alpha_val = None
-        if is_two_stage and epoch > stage1_epochs and hasattr(head, "alpha") and head.alpha is not None:
-            alpha_val = float(torch.sigmoid(head.alpha).item())
+        if hasattr(head, "alpha"):
+            try:
+                alpha_attr = getattr(head, "alpha")
+                if alpha_attr is not None:
+                    alpha_val = float(alpha_attr.item() if hasattr(alpha_attr, "item") else float(alpha_attr))
+            except Exception:
+                alpha_val = None
         prompt_log_dict = {}
         if isinstance(extractor, LearnedPromptedSam3):
             prompt_log_dict = extractor.prompt_state_summary()
@@ -1186,6 +1240,7 @@ def main(argv: list[str] | None = None) -> int:
     test_summary = {
         "dataset": "monuseg",
         "variant": variant,
+        "variant_label": str(config.get("model", {}).get("variant_label", "")),
         "seed": int(args.seed),
         "eval_split": "test",
         "stage": "TEST_SCREEN",

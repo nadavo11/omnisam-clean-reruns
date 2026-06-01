@@ -21,6 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from ..blocks.conv_blocks import ConvBNReLU
+from .decoder_semantic_map import DecoderSemanticFpnFusionHead
 
 
 def _resize_to(x: torch.Tensor, size_hw: tuple[int, int]) -> torch.Tensor:
@@ -531,6 +532,560 @@ class LowRankGlobalContextFusionHead(_AttentionContextFusionBase):
         return delta, summary, {"global_context_attention": _resize_to(delta.detach(), target_hw)}
 
 
+class _TaskTokenContextModule(nn.Module):
+    """Learned task-token context extractor over a fused feature map."""
+
+    def __init__(self, decoder_dim: int, *, num_tokens: int = 4, num_heads: int = 4, pool_hw: int = 16) -> None:
+        super().__init__()
+        self.decoder_dim = int(decoder_dim)
+        self.num_tokens = int(num_tokens)
+        self.pool_hw = int(pool_hw)
+        self.tokens = nn.Parameter(torch.empty(self.num_tokens, self.decoder_dim))
+        nn.init.normal_(self.tokens, mean=0.0, std=0.02)
+        self.token_attn = nn.MultiheadAttention(self.decoder_dim, num_heads=num_heads, batch_first=True)
+        self.token_norm = nn.LayerNorm(self.decoder_dim)
+        self.context_norm = nn.LayerNorm(self.decoder_dim)
+
+    def forward(self, feat: torch.Tensor) -> tuple[torch.Tensor, dict[str, float], dict[str, torch.Tensor]]:
+        ctx = _pool_tokens(feat, (self.pool_hw, self.pool_hw))
+        tokens = self.tokens.unsqueeze(0).expand(feat.shape[0], -1, -1)
+        out, weights = self.token_attn(
+            query=self.token_norm(tokens),
+            key=self.context_norm(ctx),
+            value=self.context_norm(ctx),
+            need_weights=True,
+            average_attn_weights=False,
+        )
+        pooled = out.mean(dim=1)
+        summary = {
+            "task_tokens/token_norm": float(tokens.norm(dim=-1).mean().item()),
+            "task_tokens/context_norm": float(ctx.norm(dim=-1).mean().item()),
+            "task_tokens/attention_entropy": float(_entropy_from_probs(weights.mean(dim=1), dim=-1).mean().item()),
+        }
+        return pooled, summary, {"task_tokens_attention": weights.mean(dim=1).detach()}
+
+
+class _ResidualAttentionContextFusionBase(_AttentionContextFusionBase):
+    """Shared residual-safe D0+FPN fusion base with a learnable residual scale."""
+
+    attention_type = "residual_attention_context_base"
+
+    def __init__(
+        self,
+        *,
+        source_channels: dict[str, int],
+        source_keys: Sequence[str],
+        decoder_dim: int = 128,
+        projection_dim: int = 64,
+        alpha_init: float = 0.05,
+    ) -> None:
+        super().__init__(
+            source_channels=source_channels,
+            source_keys=source_keys,
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+        )
+        alpha_init = float(min(max(alpha_init, 1e-4), 1.0 - 1e-4))
+        self.raw_alpha = nn.Parameter(torch.tensor(math.log(alpha_init / (1.0 - alpha_init)), dtype=torch.float32))
+
+    @property
+    def alpha(self) -> torch.Tensor:
+        return torch.sigmoid(self.raw_alpha)
+
+    def _combine(self, baseline: torch.Tensor, delta: torch.Tensor) -> torch.Tensor:
+        return baseline + self.alpha * delta
+
+    def forward(self, pyramid: dict[str, torch.Tensor]) -> torch.Tensor:
+        projected, target_hw = self._project_sources(pyramid)
+        baseline = self._baseline(projected)
+        delta, summary, maps = self._context_delta(projected, baseline, target_hw)
+        self._last_context_summary = {"residual/alpha": float(self.alpha.item()), **summary}
+        self._last_attention_maps = maps
+        fused = self._combine(baseline, delta)
+        return self.head(self.body(fused))
+
+
+class TaskTokensFiLMSpatialAfterHead(_ResidualAttentionContextFusionBase):
+    attention_type = "task_tokens_film_then_spatial_attention"
+
+    def __init__(
+        self,
+        *,
+        source_channels: dict[str, int],
+        source_keys: Sequence[str],
+        decoder_dim: int = 128,
+        projection_dim: int = 64,
+        num_tokens: int = 4,
+        num_heads: int = 4,
+        pool_hw: int = 16,
+        alpha_init: float = 0.05,
+    ) -> None:
+        super().__init__(
+            source_channels=source_channels,
+            source_keys=source_keys,
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+            alpha_init=alpha_init,
+        )
+        self.task_context = _TaskTokenContextModule(
+            self.decoder_dim, num_tokens=num_tokens, num_heads=num_heads, pool_hw=pool_hw
+        )
+        self.gamma = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.beta = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.spatial = nn.Conv2d(2, 1, kernel_size=7, padding=3)
+        nn.init.zeros_(self.gamma.weight)
+        nn.init.zeros_(self.gamma.bias)
+        nn.init.zeros_(self.beta.weight)
+        nn.init.zeros_(self.beta.bias)
+        _zero_init_conv(self.spatial)
+
+    def _context_delta(self, projected, baseline, target_hw):
+        task_vec, summary, maps = self.task_context(baseline)
+        gamma = 1.0 + 0.1 * torch.tanh(self.gamma(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        beta = 0.1 * torch.tanh(self.beta(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        conditioned = baseline * gamma + beta
+        avg = conditioned.mean(dim=1, keepdim=True)
+        mx = conditioned.amax(dim=1, keepdim=True)
+        spatial = 1.0 + 0.1 * torch.tanh(self.spatial(torch.cat([avg, mx], dim=1)))
+        delta = conditioned * spatial - baseline
+        summary.update({
+            "task_tokens/gamma_mean": float(gamma.mean().item()),
+            "task_tokens/beta_mean": float(beta.mean().item()),
+            "spatial_attention/mean": float(spatial.mean().item()),
+            "spatial_attention/std": float(spatial.std(unbiased=False).item()),
+        })
+        maps.update({"spatial_attention": spatial.detach(), "conditioned_features": conditioned.detach()})
+        return delta, summary, maps
+
+
+class SpatialBeforeTaskTokensFiLMHead(_ResidualAttentionContextFusionBase):
+    attention_type = "spatial_attention_then_task_tokens_film"
+
+    def __init__(
+        self,
+        *,
+        source_channels: dict[str, int],
+        source_keys: Sequence[str],
+        decoder_dim: int = 128,
+        projection_dim: int = 64,
+        num_tokens: int = 4,
+        num_heads: int = 4,
+        pool_hw: int = 16,
+        alpha_init: float = 0.05,
+    ) -> None:
+        super().__init__(
+            source_channels=source_channels,
+            source_keys=source_keys,
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+            alpha_init=alpha_init,
+        )
+        self.task_context = _TaskTokenContextModule(
+            self.decoder_dim, num_tokens=num_tokens, num_heads=num_heads, pool_hw=pool_hw
+        )
+        self.gamma = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.beta = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.spatial = nn.Conv2d(2, 1, kernel_size=7, padding=3)
+        nn.init.zeros_(self.gamma.weight)
+        nn.init.zeros_(self.gamma.bias)
+        nn.init.zeros_(self.beta.weight)
+        nn.init.zeros_(self.beta.bias)
+        _zero_init_conv(self.spatial)
+
+    def _context_delta(self, projected, baseline, target_hw):
+        avg = baseline.mean(dim=1, keepdim=True)
+        mx = baseline.amax(dim=1, keepdim=True)
+        spatial = 1.0 + 0.1 * torch.tanh(self.spatial(torch.cat([avg, mx], dim=1)))
+        spatial_applied = baseline * spatial
+        task_vec, summary, maps = self.task_context(spatial_applied)
+        gamma = 1.0 + 0.1 * torch.tanh(self.gamma(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        beta = 0.1 * torch.tanh(self.beta(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        conditioned = spatial_applied * gamma + beta
+        delta = conditioned - baseline
+        summary.update({
+            "task_tokens/gamma_mean": float(gamma.mean().item()),
+            "task_tokens/beta_mean": float(beta.mean().item()),
+            "spatial_attention/mean": float(spatial.mean().item()),
+            "spatial_attention/std": float(spatial.std(unbiased=False).item()),
+        })
+        maps.update({"spatial_attention": spatial.detach(), "conditioned_features": conditioned.detach()})
+        return delta, summary, maps
+
+
+class TaskConditionedSpatialAttentionHead(_ResidualAttentionContextFusionBase):
+    attention_type = "task_conditioned_spatial_attention"
+
+    def __init__(
+        self,
+        *,
+        source_channels: dict[str, int],
+        source_keys: Sequence[str],
+        decoder_dim: int = 128,
+        projection_dim: int = 64,
+        num_tokens: int = 4,
+        num_heads: int = 4,
+        pool_hw: int = 16,
+        alpha_init: float = 0.05,
+    ) -> None:
+        super().__init__(
+            source_channels=source_channels,
+            source_keys=source_keys,
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+            alpha_init=alpha_init,
+        )
+        self.task_context = _TaskTokenContextModule(
+            self.decoder_dim, num_tokens=num_tokens, num_heads=num_heads, pool_hw=pool_hw
+        )
+        self.context_channel = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.context_spatial = nn.Linear(self.decoder_dim, 1)
+        self.spatial = nn.Conv2d(2, 1, kernel_size=7, padding=3)
+        nn.init.zeros_(self.context_channel.weight)
+        nn.init.zeros_(self.context_channel.bias)
+        nn.init.zeros_(self.context_spatial.weight)
+        nn.init.zeros_(self.context_spatial.bias)
+        _zero_init_conv(self.spatial)
+
+    def _context_delta(self, projected, baseline, target_hw):
+        task_vec, summary, maps = self.task_context(baseline)
+        channel_gate = 1.0 + 0.1 * torch.tanh(self.context_channel(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        task_bias = self.context_spatial(task_vec).view(-1, 1, 1, 1)
+        avg = (baseline * channel_gate).mean(dim=1, keepdim=True)
+        mx = (baseline * channel_gate).amax(dim=1, keepdim=True)
+        spatial = 1.0 + 0.1 * torch.tanh(self.spatial(torch.cat([avg, mx], dim=1)) + task_bias)
+        conditioned = baseline * channel_gate * spatial
+        delta = conditioned - baseline
+        summary.update({
+            "task_tokens/channel_mean": float(channel_gate.mean().item()),
+            "task_tokens/context_bias": float(task_bias.mean().item()),
+            "spatial_attention/mean": float(spatial.mean().item()),
+            "spatial_attention/std": float(spatial.std(unbiased=False).item()),
+        })
+        maps.update({
+            "task_conditioned_spatial_attention": spatial.detach(),
+            "context_channel_gate": channel_gate.detach(),
+        })
+        return delta, summary, maps
+
+
+class ResidualTaskSpatialDeltaHead(_ResidualAttentionContextFusionBase):
+    attention_type = "residual_task_spatial_delta"
+
+    def __init__(
+        self,
+        *,
+        source_channels: dict[str, int],
+        source_keys: Sequence[str],
+        decoder_dim: int = 128,
+        projection_dim: int = 64,
+        num_tokens: int = 4,
+        num_heads: int = 4,
+        pool_hw: int = 16,
+        alpha_init: float = 0.05,
+    ) -> None:
+        super().__init__(
+            source_channels=source_channels,
+            source_keys=source_keys,
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+            alpha_init=alpha_init,
+        )
+        self.task_context = _TaskTokenContextModule(
+            self.decoder_dim, num_tokens=num_tokens, num_heads=num_heads, pool_hw=pool_hw
+        )
+        self.gamma = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.beta = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.spatial = nn.Conv2d(2, 1, kernel_size=7, padding=3)
+        self.delta_refine = nn.Sequential(
+            ConvBNReLU(self.decoder_dim, self.decoder_dim),
+            ConvBNReLU(self.decoder_dim, self.decoder_dim),
+            nn.Conv2d(self.decoder_dim, self.decoder_dim, kernel_size=1),
+        )
+        nn.init.zeros_(self.gamma.weight)
+        nn.init.zeros_(self.gamma.bias)
+        nn.init.zeros_(self.beta.weight)
+        nn.init.zeros_(self.beta.bias)
+        _zero_init_conv(self.spatial)
+        _zero_init_conv(self.delta_refine[-1])
+
+    def _context_delta(self, projected, baseline, target_hw):
+        task_vec, summary, maps = self.task_context(baseline)
+        gamma = 1.0 + 0.1 * torch.tanh(self.gamma(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        beta = 0.1 * torch.tanh(self.beta(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        conditioned = baseline * gamma + beta
+        avg = conditioned.mean(dim=1, keepdim=True)
+        mx = conditioned.amax(dim=1, keepdim=True)
+        spatial = 1.0 + 0.1 * torch.tanh(self.spatial(torch.cat([avg, mx], dim=1)))
+        refined = conditioned * spatial
+        delta = self.delta_refine(refined - baseline)
+        summary.update({
+            "task_tokens/gamma_mean": float(gamma.mean().item()),
+            "task_tokens/beta_mean": float(beta.mean().item()),
+            "spatial_attention/mean": float(spatial.mean().item()),
+            "spatial_attention/std": float(spatial.std(unbiased=False).item()),
+        })
+        maps.update({"spatial_attention": spatial.detach(), "residual_delta": delta.detach()})
+        return delta, summary, maps
+
+
+class LogitResidualTaskSpatialHead(_AttentionContextFusionBase):
+    attention_type = "logit_residual_task_spatial_correction"
+
+    def __init__(
+        self,
+        *,
+        source_channels: dict[str, int],
+        source_keys: Sequence[str],
+        decoder_dim: int = 128,
+        projection_dim: int = 64,
+        num_tokens: int = 4,
+        num_heads: int = 4,
+        pool_hw: int = 16,
+        alpha_init: float = 0.05,
+    ) -> None:
+        super().__init__(
+            source_channels=source_channels,
+            source_keys=source_keys,
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+        )
+        alpha_init = float(min(max(alpha_init, 1e-4), 1.0 - 1e-4))
+        self.raw_alpha = nn.Parameter(torch.tensor(math.log(alpha_init / (1.0 - alpha_init)), dtype=torch.float32))
+        self.base_head = DecoderSemanticFpnFusionHead(
+            f2_channels=int(source_channels["fpn_2"]),
+            f1_channels=int(source_channels["fpn_1"]),
+            f0_channels=int(source_channels["fpn_0"]),
+            decoder_map_channels=int(source_channels["decoder_semantic_map"]),
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+        )
+        self.task_context = _TaskTokenContextModule(
+            self.decoder_dim, num_tokens=num_tokens, num_heads=num_heads, pool_hw=pool_hw
+        )
+        self.gamma = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.beta = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.spatial = nn.Conv2d(2, 1, kernel_size=7, padding=3)
+        self.delta_head = nn.Sequential(
+            ConvBNReLU(self.decoder_dim, self.decoder_dim),
+            ConvBNReLU(self.decoder_dim, self.decoder_dim),
+            nn.Conv2d(self.decoder_dim, 1, kernel_size=1),
+        )
+        nn.init.zeros_(self.gamma.weight)
+        nn.init.zeros_(self.gamma.bias)
+        nn.init.zeros_(self.beta.weight)
+        nn.init.zeros_(self.beta.bias)
+        _zero_init_conv(self.spatial)
+        _zero_init_conv(self.delta_head[-1])
+
+    @property
+    def alpha(self) -> torch.Tensor:
+        return torch.sigmoid(self.raw_alpha)
+
+    def forward(self, pyramid: dict[str, torch.Tensor]) -> torch.Tensor:
+        projected, target_hw = self._project_sources(pyramid)
+        baseline = self._baseline(projected)
+        task_vec, summary, maps = self.task_context(baseline)
+        gamma = 1.0 + 0.1 * torch.tanh(self.gamma(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        beta = 0.1 * torch.tanh(self.beta(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        conditioned = baseline * gamma + beta
+        avg = conditioned.mean(dim=1, keepdim=True)
+        mx = conditioned.amax(dim=1, keepdim=True)
+        spatial = 1.0 + 0.1 * torch.tanh(self.spatial(torch.cat([avg, mx], dim=1)))
+        refined = conditioned * spatial
+        base_logits = self.base_head(pyramid)
+        delta_logits = self.delta_head(refined - baseline)
+        self._last_context_summary = {
+            "residual/alpha": float(self.alpha.item()),
+            "task_tokens/gamma_mean": float(gamma.mean().item()),
+            "task_tokens/beta_mean": float(beta.mean().item()),
+            "spatial_attention/mean": float(spatial.mean().item()),
+            "spatial_attention/std": float(spatial.std(unbiased=False).item()),
+            **summary,
+        }
+        self._last_attention_maps = {
+            **maps,
+            "spatial_attention": spatial.detach(),
+            "delta_logits": delta_logits.detach(),
+        }
+        return base_logits + self.alpha * delta_logits
+
+
+class DualSkipTaskSpatialFusionHead(_ResidualAttentionContextFusionBase):
+    attention_type = "dual_skip_task_spatial_fusion"
+
+    def __init__(
+        self,
+        *,
+        source_channels: dict[str, int],
+        source_keys: Sequence[str],
+        decoder_dim: int = 128,
+        projection_dim: int = 64,
+        num_tokens: int = 4,
+        num_heads: int = 4,
+        pool_hw: int = 16,
+        alpha_init: float = 0.05,
+    ) -> None:
+        super().__init__(
+            source_channels=source_channels,
+            source_keys=source_keys,
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+            alpha_init=alpha_init,
+        )
+        self.task_context = _TaskTokenContextModule(
+            self.decoder_dim, num_tokens=num_tokens, num_heads=num_heads, pool_hw=pool_hw
+        )
+        self.gamma = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.beta = nn.Linear(self.decoder_dim, self.decoder_dim)
+        self.spatial = nn.Conv2d(2, 1, kernel_size=7, padding=3)
+        self.dual_fuse = nn.Sequential(
+            ConvBNReLU(self.decoder_dim * 4, self.decoder_dim),
+            ConvBNReLU(self.decoder_dim, self.decoder_dim),
+            nn.Conv2d(self.decoder_dim, self.decoder_dim, kernel_size=1),
+        )
+        nn.init.zeros_(self.gamma.weight)
+        nn.init.zeros_(self.gamma.bias)
+        nn.init.zeros_(self.beta.weight)
+        nn.init.zeros_(self.beta.bias)
+        _zero_init_conv(self.spatial)
+        _zero_init_conv(self.dual_fuse[-1])
+
+    def _context_delta(self, projected, baseline, target_hw):
+        task_vec, summary, maps = self.task_context(baseline)
+        gamma = 1.0 + 0.1 * torch.tanh(self.gamma(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        beta = 0.1 * torch.tanh(self.beta(task_vec)).view(-1, self.decoder_dim, 1, 1)
+        conditioned = baseline * gamma + beta
+        avg = conditioned.mean(dim=1, keepdim=True)
+        mx = conditioned.amax(dim=1, keepdim=True)
+        spatial = 1.0 + 0.1 * torch.tanh(self.spatial(torch.cat([avg, mx], dim=1)))
+        refined = conditioned * spatial
+        combined = torch.cat([baseline, refined, baseline - refined, baseline * refined], dim=1)
+        delta = self.dual_fuse(combined)
+        summary.update({
+            "task_tokens/gamma_mean": float(gamma.mean().item()),
+            "task_tokens/beta_mean": float(beta.mean().item()),
+            "spatial_attention/mean": float(spatial.mean().item()),
+            "spatial_attention/std": float(spatial.std(unbiased=False).item()),
+        })
+        maps.update({"spatial_attention": spatial.detach(), "dual_skip_delta": delta.detach()})
+        return delta, summary, maps
+
+
+class SourceSpatialGatesTaskTokensHead(_ResidualAttentionContextFusionBase):
+    attention_type = "source_spatial_gates_task_tokens"
+
+    def __init__(
+        self,
+        *,
+        source_channels: dict[str, int],
+        source_keys: Sequence[str],
+        decoder_dim: int = 128,
+        projection_dim: int = 64,
+        num_tokens: int = 4,
+        num_heads: int = 4,
+        pool_hw: int = 16,
+        alpha_init: float = 0.05,
+    ) -> None:
+        super().__init__(
+            source_channels=source_channels,
+            source_keys=source_keys,
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+            alpha_init=alpha_init,
+        )
+        self.task_context = _TaskTokenContextModule(
+            self.decoder_dim, num_tokens=num_tokens, num_heads=num_heads, pool_hw=pool_hw
+        )
+        self.source_channel_gate = nn.ModuleDict(
+            {key: nn.Linear(self.decoder_dim, self.projection_dim) for key in self.source_keys}
+        )
+        self.source_spatial_gate = nn.ModuleDict(
+            {key: nn.Conv2d(2, 1, kernel_size=7, padding=3) for key in self.source_keys}
+        )
+        for gate in self.source_channel_gate.values():
+            nn.init.zeros_(gate.weight)
+            nn.init.zeros_(gate.bias)
+        for gate in self.source_spatial_gate.values():
+            _zero_init_conv(gate)
+
+    def _context_delta(self, projected, baseline, target_hw):
+        task_vec, summary, maps = self.task_context(baseline)
+        gated_parts = []
+        for key in self.source_keys:
+            x = projected[key]
+            channel_gate = 1.0 + 0.1 * torch.tanh(self.source_channel_gate[key](task_vec)).view(-1, self.projection_dim, 1, 1)
+            avg = x.mean(dim=1, keepdim=True)
+            mx = x.amax(dim=1, keepdim=True)
+            spatial = 1.0 + 0.1 * torch.tanh(self.source_spatial_gate[key](torch.cat([avg, mx], dim=1)))
+            gated_parts.append(x * channel_gate * spatial)
+            summary[f"source_gate/{key}_channel_mean"] = float(channel_gate.mean().item())
+            summary[f"source_gate/{key}_spatial_mean"] = float(spatial.mean().item())
+            maps[f"source_gate_{key}"] = (channel_gate.mean(dim=1, keepdim=True) * spatial).detach()
+        gated = torch.cat(gated_parts, dim=1)
+        delta = self.pre_fuse(gated) - baseline
+        return delta, summary, maps
+
+
+class F0BoundarySpatialTaskRefineHead(_ResidualAttentionContextFusionBase):
+    attention_type = "f0_boundary_spatial_task_refine"
+
+    def __init__(
+        self,
+        *,
+        source_channels: dict[str, int],
+        source_keys: Sequence[str],
+        decoder_dim: int = 128,
+        projection_dim: int = 64,
+        num_tokens: int = 4,
+        num_heads: int = 4,
+        pool_hw: int = 16,
+        alpha_init: float = 0.05,
+    ) -> None:
+        super().__init__(
+            source_channels=source_channels,
+            source_keys=source_keys,
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+            alpha_init=alpha_init,
+        )
+        if "fpn_0" not in self.source_keys:
+            raise ValueError("F0BoundarySpatialTaskRefineHead requires fpn_0 in source_keys")
+        self.task_context = _TaskTokenContextModule(
+            self.decoder_dim, num_tokens=num_tokens, num_heads=num_heads, pool_hw=pool_hw
+        )
+        self.f0_channel_gate = nn.Linear(self.decoder_dim, self.projection_dim)
+        self.f0_spatial_gate = nn.Conv2d(2, 1, kernel_size=7, padding=3)
+        self.f0_refine = nn.Sequential(
+            ConvBNReLU(self.projection_dim, self.projection_dim),
+            ConvBNReLU(self.projection_dim, self.projection_dim),
+            nn.Conv2d(self.projection_dim, self.projection_dim, kernel_size=1),
+        )
+        nn.init.zeros_(self.f0_channel_gate.weight)
+        nn.init.zeros_(self.f0_channel_gate.bias)
+        _zero_init_conv(self.f0_spatial_gate)
+        _zero_init_conv(self.f0_refine[-1])
+
+    def _context_delta(self, projected, baseline, target_hw):
+        task_vec, summary, maps = self.task_context(baseline)
+        f0 = projected["fpn_0"]
+        channel_gate = 1.0 + 0.1 * torch.tanh(self.f0_channel_gate(task_vec)).view(-1, self.projection_dim, 1, 1)
+        avg = f0.mean(dim=1, keepdim=True)
+        mx = f0.amax(dim=1, keepdim=True)
+        spatial = 1.0 + 0.1 * torch.tanh(self.f0_spatial_gate(torch.cat([avg, mx], dim=1)))
+        refined_f0 = f0 * channel_gate * spatial
+        gated = dict(projected)
+        gated["fpn_0"] = refined_f0
+        delta = self.pre_fuse(torch.cat([gated[key] for key in self.source_keys], dim=1)) - baseline
+        delta = self.f0_refine(delta)
+        summary.update({
+            "f0_gate/channel_mean": float(channel_gate.mean().item()),
+            "f0_gate/spatial_mean": float(spatial.mean().item()),
+            "f0_gate/spatial_std": float(spatial.std(unbiased=False).item()),
+        })
+        maps.update({"f0_boundary_spatial_attention": spatial.detach(), "f0_refined": refined_f0.detach()})
+        return delta, summary, maps
+
+
 AttentionContextFusionHeadBase = _AttentionContextFusionBase
 
 __all__ = [
@@ -540,6 +1095,14 @@ __all__ = [
     "D0QueryFpnCrossAttentionHead",
     "FpnQueryD0CrossAttentionHead",
     "LearnedTaskTokensFiLMHead",
+    "TaskTokensFiLMSpatialAfterHead",
+    "SpatialBeforeTaskTokensFiLMHead",
+    "TaskConditionedSpatialAttentionHead",
+    "ResidualTaskSpatialDeltaHead",
+    "LogitResidualTaskSpatialHead",
+    "DualSkipTaskSpatialFusionHead",
+    "SourceSpatialGatesTaskTokensHead",
+    "F0BoundarySpatialTaskRefineHead",
     "LowRankGlobalContextFusionHead",
     "SourceGatedChannelContextHead",
     "WindowSelfAttentionFusionHead",
