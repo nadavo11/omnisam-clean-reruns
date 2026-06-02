@@ -21,6 +21,14 @@ from .attention_context import (
     SourceGatedChannelContextHead,
     WindowSelfAttentionFusionHead,
 )
+from .final_capacity import (
+    DeepResidualConvFusionHead,
+    FineMapFusionHighResHead,
+    HybridTaskSpatialFineHead,
+    TaskSpatialResidualStackHead,
+    TaskTokensFiLMWideHead,
+    WideDecoderSemanticFpnFusionHead,
+)
 from .decoder_semantic_map import (
     DecoderSemanticF0FusionHead,
     DecoderSemanticFpnFusionHead,
@@ -60,6 +68,12 @@ __all__ = [
     "FpnPlusDecoderSemanticHead",
     "SourceGatedChannelContextHead",
     "WindowSelfAttentionFusionHead",
+    "TaskTokensFiLMWideHead",
+    "TaskSpatialResidualStackHead",
+    "FineMapFusionHighResHead",
+    "DeepResidualConvFusionHead",
+    "HybridTaskSpatialFineHead",
+    "WideDecoderSemanticFpnFusionHead",
     "GatedAllRefineHead",
     "GatedWarmupHead",
     "StagedA2ReadoutHead",

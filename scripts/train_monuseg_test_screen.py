@@ -79,6 +79,14 @@ _SINGLE_STAGE_VARIANTS = {
     "d0fpn_dual_skip_task_spatial_fusion",
     "d0fpn_source_spatial_gates_task_tokens",
     "d0fpn_f0_boundary_spatial_task_refine",
+    "d0fpn_cap160_task_tokens_16_film_wide",
+    "d0fpn_cap160_task_tokens_32_film_wide",
+    "d0fpn_cap160_task_spatial_residual_2layer",
+    "d0fpn_cap160_task_spatial_residual_4layer",
+    "d0fpn_cap160_fine_map_fusion_highres_head",
+    "d0fpn_cap160_wide_fusion_dim256",
+    "d0fpn_cap160_deep_conv_fusion_residual",
+    "d0fpn_cap160_hybrid_best_task_spatial_fine",
 }
 _TWO_STAGE_VARIANTS = {"final_staged", "final_staged_a2"}
 _ALL_VARIANTS = _SINGLE_STAGE_VARIANTS | _TWO_STAGE_VARIANTS
@@ -455,6 +463,67 @@ def _build_head(variant: str, channels: dict, method_config: dict) -> torch.nn.M
             kwargs["num_heads"] = int(model_cfg.get("num_heads", 4))
             kwargs["pool_hw"] = int(model_cfg.get("pool_hw", 16))
             kwargs["alpha_init"] = float(model_cfg.get("alpha_init", 0.05))
+    elif variant in {
+        "d0fpn_cap160_task_tokens_16_film_wide",
+        "d0fpn_cap160_task_tokens_32_film_wide",
+        "d0fpn_cap160_task_spatial_residual_2layer",
+        "d0fpn_cap160_task_spatial_residual_4layer",
+        "d0fpn_cap160_fine_map_fusion_highres_head",
+        "d0fpn_cap160_wide_fusion_dim256",
+        "d0fpn_cap160_deep_conv_fusion_residual",
+        "d0fpn_cap160_hybrid_best_task_spatial_fine",
+    }:
+        source_channels = {
+            "decoder_semantic_map": int(channels["decoder_map_channels"]),
+            "fpn_2": int(channels["f2_channels"]),
+            "fpn_1": int(channels["f1_channels"]),
+            "fpn_0": int(channels["f0_channels"]),
+        }
+        kwargs = {
+            "source_channels": source_channels,
+            "source_keys": ("decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"),
+            "projection_dim": int(model_cfg.get("projection_dim", 96)),
+            "decoder_dim": int(model_cfg.get("decoder_dim", 192)),
+        }
+        if variant == "d0fpn_cap160_task_tokens_16_film_wide":
+            kwargs["num_tokens"] = int(model_cfg.get("num_tokens", 16))
+            kwargs["num_heads"] = int(model_cfg.get("num_heads", 8))
+            kwargs["pool_hw"] = int(model_cfg.get("pool_hw", 16))
+            kwargs["token_hidden_dim"] = int(model_cfg.get("token_hidden_dim", 512))
+            kwargs["warmup_epochs"] = int(model_cfg.get("warmup_epochs", 20))
+        elif variant == "d0fpn_cap160_task_tokens_32_film_wide":
+            kwargs["num_tokens"] = int(model_cfg.get("num_tokens", 32))
+            kwargs["num_heads"] = int(model_cfg.get("num_heads", 8))
+            kwargs["pool_hw"] = int(model_cfg.get("pool_hw", 16))
+            kwargs["token_hidden_dim"] = int(model_cfg.get("token_hidden_dim", 768))
+            kwargs["warmup_epochs"] = int(model_cfg.get("warmup_epochs", 20))
+        elif variant in {"d0fpn_cap160_task_spatial_residual_2layer", "d0fpn_cap160_task_spatial_residual_4layer"}:
+            kwargs["num_tokens"] = int(model_cfg.get("num_tokens", 8))
+            kwargs["num_heads"] = int(model_cfg.get("num_heads", 8))
+            kwargs["pool_hw"] = int(model_cfg.get("pool_hw", 16))
+            kwargs["num_blocks"] = int(model_cfg.get("num_blocks", 2 if variant.endswith("2layer") else 4))
+            kwargs["refine_depth"] = int(model_cfg.get("refine_depth", 2))
+            kwargs["warmup_epochs"] = int(model_cfg.get("warmup_epochs", 20))
+        elif variant == "d0fpn_cap160_fine_map_fusion_highres_head":
+            kwargs["warmup_epochs"] = int(model_cfg.get("warmup_epochs", 20))
+        elif variant == "d0fpn_cap160_wide_fusion_dim256":
+            # Same architecture family as the locked D0+FPN fusion, but with a wider head.
+            kwargs["projection_dim"] = int(model_cfg.get("projection_dim", 128))
+            kwargs["decoder_dim"] = int(model_cfg.get("decoder_dim", 256))
+        elif variant == "d0fpn_cap160_deep_conv_fusion_residual":
+            kwargs["num_blocks"] = int(model_cfg.get("num_blocks", 8))
+            kwargs["task_every"] = int(model_cfg.get("task_every", 2))
+            kwargs["num_tokens"] = int(model_cfg.get("num_tokens", 8))
+            kwargs["num_heads"] = int(model_cfg.get("num_heads", 8))
+            kwargs["pool_hw"] = int(model_cfg.get("pool_hw", 16))
+            kwargs["warmup_epochs"] = int(model_cfg.get("warmup_epochs", 20))
+        elif variant == "d0fpn_cap160_hybrid_best_task_spatial_fine":
+            kwargs["num_tokens"] = int(model_cfg.get("num_tokens", 16))
+            kwargs["num_heads"] = int(model_cfg.get("num_heads", 8))
+            kwargs["pool_hw"] = int(model_cfg.get("pool_hw", 16))
+            kwargs["task_blocks"] = int(model_cfg.get("task_blocks", 2))
+            kwargs["refine_depth"] = int(model_cfg.get("refine_depth", 2))
+            kwargs["warmup_epochs"] = int(model_cfg.get("warmup_epochs", 20))
     kwargs.pop("decoder_dim", None)
     kwargs["decoder_dim"] = int(model_cfg.get("decoder_dim", 128))
     return build_head(variant, **kwargs)
@@ -498,6 +567,14 @@ def _feature_sources_for_variant(variant: str) -> list[str]:
         "d0fpn_dual_skip_task_spatial_fusion": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
         "d0fpn_source_spatial_gates_task_tokens": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
         "d0fpn_f0_boundary_spatial_task_refine": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_cap160_task_tokens_16_film_wide": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_cap160_task_tokens_32_film_wide": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_cap160_task_spatial_residual_2layer": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_cap160_task_spatial_residual_4layer": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_cap160_fine_map_fusion_highres_head": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_cap160_wide_fusion_dim256": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_cap160_deep_conv_fusion_residual": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
+        "d0fpn_cap160_hybrid_best_task_spatial_fine": ["decoder_semantic_map", "fpn_2", "fpn_1", "fpn_0"],
     }
     return mapping.get(variant, [])
 
@@ -851,6 +928,8 @@ def main(argv: list[str] | None = None) -> int:
                 variant,
                 f"seed{args.seed}",
             ]
+            if "cap160" in variant:
+                wandb_tags.append("capacity160")
             if "task" in attention_type or "tokens" in attention_type:
                 wandb_tags.append("task_tokens")
             if "spatial" in attention_type:
@@ -986,7 +1065,10 @@ def main(argv: list[str] | None = None) -> int:
     final_epoch_dice = float("nan")
     final_epoch_iou = float("nan")
     final_eval_result = None
+    epoch_eval_metrics: dict[int, dict[str, float]] = {}
     final_ckpt = out_dir / "checkpoint.pt"
+    ep80_ckpt = out_dir / "checkpoint_ep80.pt"
+    ep120_ckpt = out_dir / "checkpoint_ep120.pt"
     best_ckpt = out_dir / "checkpoint_best.pt"
     latest_ckpt = out_dir / "checkpoint_last.pt"
     per_epoch_csv = out_dir / "per_epoch_metrics.csv"
@@ -996,6 +1078,11 @@ def main(argv: list[str] | None = None) -> int:
     per_epoch_eval_csv.write_text(per_epoch_header)
 
     for epoch in range(1, total_epochs + 1):
+        if hasattr(head, "set_epoch"):
+            try:
+                head.set_epoch(epoch)
+            except Exception as exc:
+                print(f"[warn] head.set_epoch failed at epoch {epoch}: {exc}", file=sys.stderr)
         # Two-stage transition
         if is_two_stage and epoch == stage1_epochs + 1:
             print(f"[{args.run_name}] Stage 2: enabling F0 residual at epoch {epoch}", flush=True)
@@ -1052,6 +1139,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             test_dice = float(test_result.dice)
             test_iou = float(test_result.iou)
+            epoch_eval_metrics[epoch] = {"dice": test_dice, "iou": test_iou}
             if epoch == total_epochs:
                 final_eval_result = test_result
 
@@ -1067,6 +1155,10 @@ def main(argv: list[str] | None = None) -> int:
             final_epoch_iou = test_iou
         if epoch == total_epochs:
             save_checkpoint(final_ckpt, model=checkpoint_module, optimizer=optimizer, epoch=epoch)
+        if epoch == 80 and total_epochs >= 80:
+            save_checkpoint(ep80_ckpt, model=checkpoint_module, optimizer=optimizer, epoch=epoch)
+        if epoch == 120 and total_epochs >= 120:
+            save_checkpoint(ep120_ckpt, model=checkpoint_module, optimizer=optimizer, epoch=epoch)
         if scheduler is not None:
             scheduler.step()
 
@@ -1255,6 +1347,16 @@ def main(argv: list[str] | None = None) -> int:
         "eval_every": eval_every,
         "visual_every": visual_every,
         "checkpoint_selection": "final_epoch",
+        "fixed_schedule_checkpoint_views": {
+            str(epoch): {
+                "selected_epoch": epoch,
+                "test_dice": epoch_eval_metrics.get(epoch, {}).get("dice", float("nan")),
+                "test_iou": epoch_eval_metrics.get(epoch, {}).get("iou", float("nan")),
+                "checkpoint_path": str((out_dir / f"checkpoint_ep{epoch}.pt").resolve()) if (out_dir / f"checkpoint_ep{epoch}.pt").exists() else "",
+            }
+            for epoch in (80, 120, total_epochs)
+            if total_epochs >= epoch
+        },
         "head_param_count": head_param_count,
         "head_class_name": head_class_name,
         "attention_type": attention_type,
@@ -1329,6 +1431,10 @@ def main(argv: list[str] | None = None) -> int:
                 "test/iou": best_test_iou,
                 "test/final_dice": final_epoch_dice,
                 "test/final_iou": final_epoch_iou,
+                "test/epoch80_dice": epoch_eval_metrics.get(80, {}).get("dice", float("nan")),
+                "test/epoch80_iou": epoch_eval_metrics.get(80, {}).get("iou", float("nan")),
+                "test/epoch120_dice": epoch_eval_metrics.get(120, {}).get("dice", float("nan")),
+                "test/epoch120_iou": epoch_eval_metrics.get(120, {}).get("iou", float("nan")),
                 "test/eval_split": "test",
                 "checkpoint_sha256": final_sha,
                 "channel_parity_ok": feature_shapes["channel_parity_ok"],

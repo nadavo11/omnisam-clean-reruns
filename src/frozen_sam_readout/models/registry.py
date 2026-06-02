@@ -36,6 +36,12 @@ from .heads import (
     SourceGatedChannelContextHead,
     StagedA2ReadoutHead,
     StagedMultiscaleReadoutHead,
+    TaskSpatialResidualStackHead,
+    TaskTokensFiLMWideHead,
+    FineMapFusionHighResHead,
+    DeepResidualConvFusionHead,
+    HybridTaskSpatialFineHead,
+    WideDecoderSemanticFpnFusionHead,
     WindowSelfAttentionFusionHead,
 )
 
@@ -75,6 +81,14 @@ MODEL_REGISTRY: Dict[str, Type[nn.Module]] = {
     "d0fpn_dual_skip_task_spatial_fusion": DualSkipTaskSpatialFusionHead,
     "d0fpn_source_spatial_gates_task_tokens": SourceSpatialGatesTaskTokensHead,
     "d0fpn_f0_boundary_spatial_task_refine": F0BoundarySpatialTaskRefineHead,
+    "d0fpn_cap160_task_tokens_16_film_wide": TaskTokensFiLMWideHead,
+    "d0fpn_cap160_task_tokens_32_film_wide": TaskTokensFiLMWideHead,
+    "d0fpn_cap160_task_spatial_residual_2layer": TaskSpatialResidualStackHead,
+    "d0fpn_cap160_task_spatial_residual_4layer": TaskSpatialResidualStackHead,
+    "d0fpn_cap160_fine_map_fusion_highres_head": FineMapFusionHighResHead,
+    "d0fpn_cap160_wide_fusion_dim256": WideDecoderSemanticFpnFusionHead,
+    "d0fpn_cap160_deep_conv_fusion_residual": DeepResidualConvFusionHead,
+    "d0fpn_cap160_hybrid_best_task_spatial_fine": HybridTaskSpatialFineHead,
 }
 
 
