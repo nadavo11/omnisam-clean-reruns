@@ -20,7 +20,7 @@ from .attention_context import (
     _resize_to,
     _zero_init_conv,
 )
-from .decoder_semantic_map import DecoderSemanticFpnFusionHead
+from .decoder_semantic_map import DecoderSemanticFpnFusionHead, DecoderSemanticMultiFusionHead
 
 
 def _schedule_value(epoch: int, warmup_epochs: int, *, device: torch.device) -> torch.Tensor:
