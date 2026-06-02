@@ -471,10 +471,27 @@ class HybridTaskSpatialFineHead(_ScheduledResidualAttentionContextFusionBase):
         return (x - baseline) + f0_delta, summary, maps
 
 
-class WideDecoderSemanticFpnFusionHead(DecoderSemanticFpnFusionHead):
-    """Alias for the widened full D0+FPN baseline."""
+class WideDecoderSemanticFpnFusionHead(DecoderSemanticMultiFusionHead):
+    """Widened full D0+FPN baseline with the generic multi-fusion interface."""
 
     attention_type = "cap160_wide_fusion_dim256"
+
+    def __init__(
+        self,
+        *,
+        source_channels: dict[str, int],
+        source_keys: tuple[str, ...],
+        decoder_dim: int = 128,
+        projection_dim: int = 256,
+        **kwargs: int,
+    ) -> None:
+        del kwargs
+        super().__init__(
+            source_channels=source_channels,
+            source_keys=source_keys,
+            decoder_dim=decoder_dim,
+            projection_dim=projection_dim,
+        )
 
 
 __all__ = [
